@@ -11,6 +11,7 @@ export function App() {
   if (legalRoute === '/terminos-condiciones') return <LegalPages page="terms" />;
   if (legalRoute === '/politica-privacidad') return <LegalPages page="privacy" />;
   if (legalRoute === '/autorizacion-datos') return <LegalPages page="data-authorization" />;
+  if (legalRoute === '/eliminar-cuenta') return <LegalPages page="account-deletion" />;
 
   const [session, setSession] = useState<WebSession | null>(null);
   const [isBooting, setIsBooting] = useState(true);

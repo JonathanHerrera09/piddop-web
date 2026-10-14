@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 
-type LegalPage = 'terms' | 'privacy' | 'data-authorization';
+type LegalPage = 'terms' | 'privacy' | 'data-authorization' | 'account-deletion';
 
 const EFFECTIVE_DATE = '3 de octubre de 2026';
 
@@ -15,6 +15,7 @@ function LegalLayout({ children, title, description }: { children: ReactNode; ti
           <a href="/terminos-condiciones">Términos</a>
           <a href="/politica-privacidad">Privacidad</a>
           <a href="/autorizacion-datos">Datos</a>
+          <a href="/eliminar-cuenta">Eliminar cuenta</a>
         </nav>
       </header>
       <section className="legal-hero">
@@ -49,6 +50,7 @@ function ResponsibleInformation() {
 export function LegalPages({ page }: { page: LegalPage }) {
   if (page === 'terms') return <TermsPage />;
   if (page === 'privacy') return <PrivacyPage />;
+  if (page === 'account-deletion') return <AccountDeletionPage />;
   return <DataAuthorizationPage />;
 }
 
@@ -109,6 +111,31 @@ function PrivacyPage() {
     <p>Las solicitudes deben enviarse al canal de datos del Responsable, indicando nombre completo, identificación, datos de contacto, descripción clara de la petición y documentos de soporte si aplican. Las consultas se atenderán dentro de los diez (10) días hábiles siguientes a su recepción; los reclamos, dentro de los quince (15) días hábiles, sin perjuicio de las prórrogas y demás reglas establecidas por la ley. Si la solicitud está incompleta, se pedirá subsanación conforme a la normativa aplicable.</p>
     <h2>9. Vigencia</h2>
     <p>Esta Política rige desde la fecha indicada en su encabezado y permanecerá vigente mientras Piddop realice tratamiento de datos personales. Cualquier actualización se publicará en esta misma dirección con su fecha de vigencia.</p>
+  </LegalLayout>;
+}
+
+function AccountDeletionPage() {
+  return <LegalLayout title="Eliminar una cuenta de Piddop" description="Cómo solicitar la eliminación de una cuenta de usuario y qué sucede con los datos asociados.">
+    <h2>Cómo eliminar tu cuenta</h2>
+    <p>Puedes solicitar la eliminación directamente desde la aplicación Piddop. No necesitas contactar a Google Play ni enviar tus credenciales por correo.</p>
+    <ol>
+      <li>Abre Piddop e inicia sesión con la cuenta que deseas eliminar.</li>
+      <li>Ve a <strong>Mi perfil</strong>.</li>
+      <li>Selecciona <strong>Eliminar cuenta</strong>.</li>
+      <li>Confirma la solicitud en el aviso de seguridad.</li>
+    </ol>
+    <p>Al confirmar, se desactiva el acceso a la cuenta y se cierran las sesiones activas. Esta acción no se puede deshacer desde la aplicación.</p>
+
+    <h2>Datos que se eliminan o desactivan</h2>
+    <p>La solicitud desactiva la cuenta y su acceso a Piddop. Los datos de perfil, autenticación y preferencias asociados dejan de estar disponibles para el uso normal de la Plataforma y se eliminan o anonimizan cuando ya no son necesarios para las finalidades informadas.</p>
+
+    <h2>Datos que podemos conservar</h2>
+    <p>Podemos conservar de forma restringida los registros de pedidos, pagos, facturación, devoluciones, comunicaciones de soporte, prevención de fraude y evidencias de aceptación, únicamente cuando sea necesario para cumplir obligaciones legales, tributarias, contables, contractuales, resolver reclamaciones o proteger la seguridad de la Plataforma.</p>
+    <p>Estos registros no se usan para reactivar la cuenta ni para enviar comunicaciones comerciales. Se conservan solo durante el período exigido por la obligación aplicable o mientras exista una reclamación, auditoría o proceso pendiente; después se eliminan, anonimizan o bloquean de forma segura.</p>
+
+    <h2>¿Necesitas ayuda?</h2>
+    <p>Si no puedes acceder a tu cuenta para completar estos pasos, usa el canal de soporte disponible dentro de la aplicación e indica que necesitas eliminar tu cuenta. Para protegerte, podremos solicitar información razonable para verificar que eres el titular.</p>
+    <p>Esta página aplica a las cuentas de cliente de Piddop. La eliminación de una cuenta no elimina automáticamente información que un comercio o proveedor deba conservar como responsable independiente de una transacción.</p>
   </LegalLayout>;
 }
 
