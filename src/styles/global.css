@@ -178,6 +178,7 @@ button {
   min-height: 100vh;
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
+  background: #ff5b09;
 }
 
 .auth-hero {
@@ -185,7 +186,20 @@ button {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  background:
+    radial-gradient(circle at 80% 18%, rgb(255 210 165 / 40%) 0 1%, transparent 2% 100%),
+    radial-gradient(circle at 19% 81%, rgb(255 255 255 / 17%) 0 1%, transparent 2% 100%),
+    linear-gradient(130deg, #ff8317 0%, #ff5b09 48%, #ed3d06 100%);
 }
+
+.auth-hero::before,
+.auth-hero::after { content: ''; position: absolute; pointer-events: none; border-radius: 50%; }
+.auth-hero::before { width: min(52vw, 760px); height: min(52vw, 760px); right: -38%; top: -30%; border: 1px solid rgb(255 255 255 / 28%); box-shadow: 0 0 0 28px rgb(255 255 255 / 5%), 0 0 0 62px rgb(255 255 255 / 4%); }
+.auth-hero::after { width: 20rem; height: 20rem; left: -12rem; bottom: -14rem; border: 1px solid rgb(255 255 255 / 26%); box-shadow: 0 0 0 24px rgb(255 255 255 / 5%); }
+.auth-hero > * { position: relative; z-index: 1; }
 
 .auth-hero__topbar {
   display: flex;
@@ -198,10 +212,10 @@ button {
 .auth-hero__eyebrow {
   width: fit-content;
   padding: 0.55rem 0.95rem;
-  border: 1px solid var(--border);
+  border: 1px solid rgb(255 255 255 / 42%);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.8);
-  color: var(--text);
+  background: rgb(255 255 255 / 15%);
+  color: #fff;
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -218,12 +232,14 @@ button {
   font-size: clamp(2.7rem, 4vw, 5.2rem);
   line-height: 0.96;
   font-weight: 900;
+  color: #fff;
+  text-shadow: 0 5px 22px rgb(110 25 0 / 22%);
 }
 
 .auth-hero__copy {
   max-width: 560px;
   margin: 1.5rem 0 0;
-  color: var(--text-muted);
+  color: rgb(255 255 255 / 87%);
   font-size: 1.08rem;
   line-height: 1.8;
 }
@@ -261,16 +277,22 @@ button {
   align-items: center;
   justify-content: center;
   padding: 2rem;
+  background: linear-gradient(160deg, #292c35, #1f2128);
 }
 
 .auth-card {
   width: min(100%, 500px);
-  padding: 2rem;
-  border: 1px solid rgba(17, 17, 17, 0.08);
-  border-radius: 1.5rem;
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  min-height: clamp(34rem, 62vh, 43rem);
+  padding: clamp(2.5rem, 5vh, 4.25rem) 2.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid rgb(255 255 255 / 11%);
+  border-radius: 1.75rem;
+  background: linear-gradient(145deg, #343741, #272a33);
+  color: #f8f8fb;
   backdrop-filter: blur(18px);
-  box-shadow: var(--shadow);
+  box-shadow: 0 28px 70px rgb(0 0 0 / 28%);
 }
 
 .auth-card__brand {
@@ -290,7 +312,7 @@ button {
 
 .auth-card__label {
   margin: 0 0 0.2rem;
-  color: var(--text-muted);
+  color: #ff9354;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 0.74rem;
@@ -304,7 +326,7 @@ button {
 
 .auth-form {
   display: grid;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .field {
@@ -649,8 +671,39 @@ button {
   }
 
   .auth-card {
-    padding: 1.3rem;
+    min-height: 0;
+    justify-content: flex-start;
+    padding: 1.6rem 1.45rem 2rem;
+    border-radius: 1.6rem 1.6rem 0 0;
+    background: #fff;
+    color: #171717;
   }
+
+  .auth-card__brand {
+    display: flex;
+    justify-content: center;
+    margin: -3.8rem auto 1.65rem;
+    width: 100%;
+  }
+
+  .auth-card__brand > div { display: none; }
+  .auth-card__logo {
+    width: 76px;
+    height: 76px;
+    padding: 0.4rem;
+    border: 5px solid #fff;
+    border-radius: 1.4rem;
+    background: #fff;
+    box-shadow: 0 12px 28px rgb(119 38 0 / 26%);
+  }
+
+  .auth-card-wrap { margin-top: -3.1rem; }
+  .auth-hero { min-height: 350px; padding-bottom: 5.8rem; }
+  .auth-hero__eyebrow img { width: 58px; height: 58px; }
+  .auth-hero__eyebrow { gap: 0.35rem; font-size: 0.95rem; }
+  .auth-form { gap: 1.05rem; }
+  .auth-form .field input { min-height: 54px; background: #f4f5f7; border-color: #e2e5ea; color: #1d2028; }
+  .auth-form .field input::placeholder { color: #777e8b; }
 
   .dashboard-main {
     padding: 1.2rem;

@@ -98,9 +98,11 @@ import {
   updateCompanyProduct,
   updateCompanyProductIngredient,
   updateCompanyService,
-  updateCompanyVariant
+  updateCompanyVariant,
+  getAdminSupportTickets,
+  updateAdminSupportTicketStatus
 } from '@/services/dashboard.service';
-import type { AdminPermission, AdminRole, CompanyAssignableRole, CompanyTeamMember, ListOptions, PaginationMeta } from '@/services/dashboard.service';
+import type { AdminPermission, AdminRole, CompanyAssignableRole, CompanyTeamMember, ListOptions, PaginationMeta, SupportTicket } from '@/services/dashboard.service';
 
 type PaginationContextValue = { meta?: PaginationMeta; search: string; onSearch: (search: string) => void; onPageChange: (page: number) => void; onPageSizeChange: (size: number) => void };
 const PaginationContext = createContext<PaginationContextValue>({ search: '', onSearch: () => undefined, onPageChange: () => undefined, onPageSizeChange: () => undefined });
@@ -641,6 +643,10 @@ function DashboardWorkspaceContent({
       return <ModuleSection description="Enlaces que verán los clientes en Configuración." title="Enlaces de la app"><CustomerLinksPanel accessToken={session.tokens.accessToken} /></ModuleSection>;
     }
 
+    if (activeModule === 'support_tickets') {
+      return <ModuleSection description="Solicitudes enviadas desde la app. Solo Super Admin tiene acceso." title="Soporte"><SupportTicketsPanel accessToken={session.tokens.accessToken} /></ModuleSection>;
+    }
+
     if (activeModule === 'customers') {
       return (
         <ModuleSection
@@ -1044,6 +1050,7 @@ function moduleLabel(moduleKey: NavigationKey) {
     categories: 'Categorias',
     coverage: 'Cobertura',
     customer_links: 'Enlaces de la app',
+    support_tickets: 'Soporte',
     customers: 'Clientes',
     coupons: 'Cupones',
     promotions: 'Promociones',
@@ -3957,6 +3964,26 @@ function CustomerLinksPanel({ accessToken }: { accessToken: string }) {
   ];
   if (isLoading) return <p>Cargando enlaces...</p>;
   return <form className="admin-company-form" onSubmit={(event) => void save(event)}>{fields.map(([key, label]) => <label className="field field--span-2" key={key}><span>{label}</span><input onChange={(event) => setLinks((current) => ({ ...current, [key]: event.target.value }))} placeholder="https://..." type="url" value={links[key]} /></label>)}{error ? <p className="form-error field--span-2">{error}</p> : null}<div className="form-actions field--span-2"><button className="primary-button toolbar-button" disabled={isSaving} type="submit">{isSaving ? 'Guardando...' : 'Guardar enlaces'}</button></div></form>;
+}
+
+function SupportTicketsPanel({ accessToken }: { accessToken: string }) {
+  const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const load = async () => {
+    try { setLoading(true); setError(null); setTickets(await getAdminSupportTickets(accessToken, { page_size: 100 })); }
+    catch (cause) { setError(cause instanceof Error ? cause.message : 'No pudimos cargar las solicitudes.'); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { void load(); }, [accessToken]);
+  async function changeStatus(ticket: SupportTicket, status: SupportTicket['status']) {
+    try { const updated = await updateAdminSupportTicketStatus(accessToken, ticket.id, status); setTickets((current) => current.map((item) => item.id === updated.id ? updated : item)); }
+    catch (cause) { showToast({ kind: 'error', title: 'No pudimos actualizar', message: cause instanceof Error ? cause.message : 'Inténtalo nuevamente.' }); }
+  }
+  if (loading) return <p>Cargando solicitudes…</p>;
+  if (error) return <p className="form-error">{error}</p>;
+  if (!tickets.length) return <p>No hay solicitudes de soporte todavía.</p>;
+  return <div className="role-panel__list">{tickets.map((ticket) => <article className="role-card" key={ticket.id}><div><strong>{ticket.subject}</strong><p>{ticket.customer.name} {ticket.customer.last_name} · {ticket.customer.email}</p><p>Contacto: {ticket.contact_phone}{ticket.order_number ? ` · Pedido: ${ticket.order_number}` : ''}</p><p>{ticket.message}</p><small>{new Date(ticket.created_at).toLocaleString('es-CO')}</small></div><label>Estado<select aria-label={`Estado de ${ticket.subject}`} value={ticket.status} onChange={(event) => void changeStatus(ticket, event.target.value as SupportTicket['status'])}><option value="open">Abierto</option><option value="in_progress">En proceso</option><option value="closed">Cerrado</option></select></label></article>)}</div>;
 }
 
 function AdminCoveragePanel({

@@ -191,6 +191,20 @@ export interface CustomerLinksSettings {
   data_authorization_url: string | null;
 }
 
+export interface SupportTicket {
+  id: number; subject: string; order_number: string | null; contact_phone: string; message: string;
+  status: 'open' | 'in_progress' | 'closed'; created_at: string;
+  customer: { id: number; name: string; last_name: string; email: string; phone: string | null };
+}
+export async function getAdminSupportTickets(accessToken: string, options: ListOptions = {}) {
+  const response = await httpRequest<{ tickets: SupportTicket[]; pagination: PaginationMeta }>({ accessToken, path: `/admin/support-tickets?${listQuery(options)}` });
+  return listResult(response.data.tickets, response.data.pagination);
+}
+export async function updateAdminSupportTicketStatus(accessToken: string, ticketId: number, status: SupportTicket['status']) {
+  const response = await httpRequest<{ ticket: SupportTicket }>({ accessToken, method: 'PATCH', body: { status }, path: `/admin/support-tickets/${ticketId}` });
+  return response.data.ticket;
+}
+
 export async function getAdminCustomerLinksSettings(accessToken: string) {
   const response = await httpRequest<{ links: CustomerLinksSettings }>({ accessToken, path: '/admin/platform-settings/customer-links' });
   return response.data.links;

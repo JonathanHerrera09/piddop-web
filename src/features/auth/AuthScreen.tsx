@@ -69,17 +69,6 @@ export function AuthScreen({ onAuthenticated, onThemeToggle, themeMode }: AuthSc
         <p className="auth-hero__copy">
           <span className="auth-desktop-copy">Gestiona pedidos, productos, servicios, citas y equipo desde un panel pensado para el trabajo diario.</span><span className="auth-mobile-copy">Gestiona tu negocio desde un solo lugar.</span>
         </p>
-
-        <div className="auth-hero__stats">
-          <article>
-            <span>Panel</span>
-            <strong>Super Admin</strong>
-          </article>
-          <article>
-            <span>Empresas</span>
-            <strong>Food / Products / Services</strong>
-          </article>
-        </div>
       </section>
 
       <section className="auth-card-wrap">

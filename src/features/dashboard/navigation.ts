@@ -14,6 +14,7 @@ export type NavigationKey =
   | 'company_users'
   | 'coverage'
   | 'customer_links'
+  | 'support_tickets'
   | 'customers'
   | 'categories'
   | 'coupons'
@@ -43,6 +44,7 @@ const superAdminNavigation: NavigationItem[] = [
   { key: 'settlements', label: 'Liquidaciones', description: 'Pagos PSE, soportes PDF y trazabilidad' },
   { key: 'coverage', label: 'Cobertura', description: 'Mapa general de la vereda y area valida' },
   { key: 'customer_links', label: 'Enlaces de la app', description: 'Soporte, tienda, politicas y terminos' },
+  { key: 'support_tickets', label: 'Soporte', description: 'Solicitudes privadas de clientes' },
   { key: 'customers', label: 'Clientes', description: 'Actividad, bloqueos y datos del usuario final' },
   { key: 'categories', label: 'Categorias', description: 'Estructura publica del catalogo' },
   { key: 'coupons', label: 'Cupones', description: 'Promociones y descuentos' },
