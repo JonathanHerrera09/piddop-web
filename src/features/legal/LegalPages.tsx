@@ -1,8 +1,11 @@
 import { useEffect, type ReactNode } from 'react';
 
-type LegalPage = 'terms' | 'privacy' | 'data-authorization' | 'account-deletion';
+type LegalPage = 'terms' | 'privacy' | 'data-authorization' | 'account-deletion' | 'support';
 
 const EFFECTIVE_DATE = '3 de octubre de 2026';
+const RESPONSIBLE_NAME = 'Jonathan David Herrera Victoria';
+const RESPONSIBLE_LOCATION = 'Candelaria, Valle del Cauca, Colombia';
+const SUPPORT_EMAIL = 'ttherrera30@gmail.com';
 
 function LegalLayout({ children, title, description }: { children: ReactNode; title: string; description: string }) {
   useEffect(() => { document.title = `${title} | Piddop`; }, [title]);
@@ -16,6 +19,7 @@ function LegalLayout({ children, title, description }: { children: ReactNode; ti
           <a href="/politica-privacidad">Privacidad</a>
           <a href="/autorizacion-datos">Datos</a>
           <a href="/eliminar-cuenta">Eliminar cuenta</a>
+          <a href="/soporte">Soporte</a>
         </nav>
       </header>
       <section className="legal-hero">
@@ -35,7 +39,7 @@ function LegalLayout({ children, title, description }: { children: ReactNode; ti
 const SHOW_RESPONSIBLE_INFORMATION = false;
 
 function ResponsibleInformation() {
-  if (!SHOW_RESPONSIBLE_INFORMATION) return null;
+  if (!SHOW_RESPONSIBLE_INFORMATION) return <PublishedResponsibleInformation />;
   return <section className="legal-notice" aria-label="Información pendiente del responsable">
     <strong>Antes de publicar:</strong> completa la razón social, NIT, domicilio y correo de protección de datos del Responsable. Estos datos no existen en el proyecto y no deben ser sustituidos por información inventada.
     <dl>
@@ -47,11 +51,34 @@ function ResponsibleInformation() {
   </section>;
 }
 
+function SupportPage() {
+  return <LegalLayout title="Soporte Piddop" description="Canales de atención para preguntas, pedidos, pagos, datos personales y eliminación de cuenta.">
+    <h2>¿Cómo te ayudamos?</h2>
+    <p>Escríbenos a <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>. Atendemos solicitudes sobre pedidos, pagos, cuentas, direcciones, servicios y soporte técnico.</p>
+    <h2>Para atenderte más rápido</h2>
+    <p>Incluye tu nombre, correo registrado, teléfono, número de pedido si aplica y una descripción clara de la situación. No envíes contraseñas, códigos de verificación ni datos completos de tarjetas.</p>
+    <h2>Datos personales y eliminación de cuenta</h2>
+    <p>Para ejercer derechos de datos personales o solicitar eliminar una cuenta a la que no puedas acceder, escribe al mismo correo. Consulta el proceso en la página Eliminar cuenta y la información de tratamiento en la Política de privacidad.</p>
+  </LegalLayout>;
+}
+
 export function LegalPages({ page }: { page: LegalPage }) {
   if (page === 'terms') return <TermsPage />;
   if (page === 'privacy') return <PrivacyPage />;
   if (page === 'account-deletion') return <AccountDeletionPage />;
+  if (page === 'support') return <SupportPage />;
   return <DataAuthorizationPage />;
+}
+
+function PublishedResponsibleInformation() {
+  return <section className="legal-notice" aria-label="Informacion del responsable del tratamiento">
+    <strong>Responsable del tratamiento de datos personales</strong>
+    <dl>
+      <div><dt>Responsable</dt><dd>{RESPONSIBLE_NAME}, persona natural</dd></div>
+      <div><dt>Domicilio</dt><dd>{RESPONSIBLE_LOCATION}</dd></div>
+      <div><dt>Canal de datos y PQRS</dt><dd><a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a></dd></div>
+    </dl>
+  </section>;
 }
 
 function TermsPage() {
@@ -103,7 +130,7 @@ function PrivacyPage() {
     <h2>5. Autorización y prueba</h2>
     <p>Cuando la autorización sea requerida, Piddop la solicitará de forma previa, expresa e informada. La autorización podrá obtenerse mediante medios físicos, electrónicos o conductas inequívocas permitidas por la ley, y se conservará evidencia de la fecha, medio, identidad del titular, texto o versión aceptada y finalidad informada. Las casillas premarcadas, el silencio o la inacción no constituyen autorización.</p>
     <h2>6. Encargados, comercios y terceros</h2>
-    <p>Podemos compartir los datos estrictamente necesarios con comercios, prestadores, repartidores, procesadores de pago, proveedores de infraestructura, mensajería, analítica, soporte y autoridades competentes, según la finalidad y con medidas contractuales, técnicas y organizativas apropiadas. Quienes actúen como encargados solo podrán tratar los datos siguiendo instrucciones documentadas y para las finalidades autorizadas.</p>
+    <p>Podemos compartir los datos estrictamente necesarios con comercios, prestadores, repartidores, procesadores de pago, proveedores de infraestructura, mensajería, analítica, soporte y autoridades competentes, según la finalidad y con medidas contractuales, técnicas y organizativas apropiadas. Entre los proveedores que pueden intervenir están Google y Apple para autenticación, Expo para notificaciones, Wompi para pagos y Render para infraestructura web. Quienes actúen como encargados solo podrán tratar los datos siguiendo instrucciones documentadas y para las finalidades autorizadas.</p>
     <h2>7. Seguridad, conservación y transferencias</h2>
     <p>Piddop adopta medidas administrativas, técnicas y humanas razonables para proteger la información contra acceso, alteración, pérdida, consulta, uso o divulgación no autorizados. Ningún sistema es absolutamente invulnerable; ante incidentes que impliquen riesgo relevante se actuarán los protocolos y deberes de reporte o comunicación exigibles.</p>
     <p>Los datos se conservan mientras sean necesarios para las finalidades informadas, la relación con el titular, la atención de reclamaciones o el cumplimiento de deberes legales y contractuales. Vencido ese plazo, se suprimirán, anonimizarán o bloquearán de forma segura. Si un proveedor se encuentra fuera de Colombia, la transferencia o transmisión se realizará con las garantías exigidas por la normativa aplicable.</p>
@@ -134,7 +161,7 @@ function AccountDeletionPage() {
     <p>Estos registros no se usan para reactivar la cuenta ni para enviar comunicaciones comerciales. Se conservan solo durante el período exigido por la obligación aplicable o mientras exista una reclamación, auditoría o proceso pendiente; después se eliminan, anonimizan o bloquean de forma segura.</p>
 
     <h2>¿Necesitas ayuda?</h2>
-    <p>Si no puedes acceder a tu cuenta para completar estos pasos, usa el canal de soporte disponible dentro de la aplicación e indica que necesitas eliminar tu cuenta. Para protegerte, podremos solicitar información razonable para verificar que eres el titular.</p>
+    <p>Si no puedes acceder a tu cuenta para completar estos pasos, escribe a <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> e indica que necesitas eliminar tu cuenta. Para protegerte, podremos solicitar información razonable para verificar que eres el titular.</p>
     <p>Esta página aplica a las cuentas de cliente de Piddop. La eliminación de una cuenta no elimina automáticamente información que un comercio o proveedor deba conservar como responsable independiente de una transacción.</p>
   </LegalLayout>;
 }
@@ -143,12 +170,12 @@ function DataAuthorizationPage() {
   return <LegalLayout title="Autorización para el tratamiento de datos personales" description="Texto de autorización que la persona titular conoce y acepta de forma previa, expresa e informada.">
     <ResponsibleInformation />
     <h2>Autorización</h2>
-    {SHOW_RESPONSIBLE_INFORMATION && <p>Declaro que, antes de entregar mis datos personales, fui informado(a) de la Política de Tratamiento de Datos Personales de Piddop y de las finalidades allí descritas. En consecuencia, autorizo de manera <strong>previa, expresa, libre, informada e inequívoca</strong> a [RAZÓN SOCIAL QUE OPERA PIDDOP], en calidad de Responsable del Tratamiento, para recolectar, almacenar, usar, actualizar, consultar, circular, transmitir, transferir cuando sea legalmente procedente y suprimir mis datos personales.</p>}
+    <p>Declaro que, antes de entregar mis datos personales, fui informado(a) de la Política de Tratamiento de Datos Personales de Piddop y de las finalidades allí descritas. En consecuencia, autorizo de manera <strong>previa, expresa, libre, informada e inequívoca</strong> a {RESPONSIBLE_NAME}, en calidad de Responsable del Tratamiento, para recolectar, almacenar, usar, actualizar, consultar, circular, transmitir, transferir cuando sea legalmente procedente y suprimir mis datos personales.</p>
     <h2>Finalidades autorizadas</h2>
     <p>La autorización comprende las finalidades necesarias para crear y administrar mi cuenta; verificar identidad y seguridad; procesar pedidos, reservas, pagos, entregas, devoluciones y soporte; comunicar información transaccional; atender PQR; prevenir fraude; cumplir obligaciones legales y contractuales; y administrar la relación con usuarios, comercios y prestadores a través de la Plataforma.</p>
     <p>Entiendo que las comunicaciones promocionales, ofertas y campañas deben contar con la autorización o base legal que corresponda y que puedo solicitar su suspensión en cualquier momento por los canales publicados, sin afectar comunicaciones estrictamente necesarias para mi cuenta o transacciones en curso.</p>
     <h2>Mis derechos y canales</h2>
-    <p>Conozco que puedo acceder, conocer, actualizar, rectificar y solicitar supresión de mis datos; solicitar prueba de esta autorización; ser informado sobre el uso de mi información; revocar la autorización cuando proceda; y presentar quejas ante la Superintendencia de Industria y Comercio. Puedo ejercer estos derechos a través de [CORREO O CANAL DE PROTECCIÓN DE DATOS].</p>
+    <p>Conozco que puedo acceder, conocer, actualizar, rectificar y solicitar supresión de mis datos; solicitar prueba de esta autorización; ser informado sobre el uso de mi información; revocar la autorización cuando proceda; y presentar quejas ante la Superintendencia de Industria y Comercio. Puedo ejercer estos derechos escribiendo a <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.</p>
     <h2>Manifestaciones</h2>
     <p>Declaro que los datos suministrados son veraces y que cuento con autorización cuando proporciono datos de terceros. Entiendo que puedo actualizar mi información y que la revocatoria o supresión no aplicará cuando exista un deber legal o contractual de conservar los datos, ni afectará tratamientos realizados válidamente antes de la solicitud.</p>
     <p>La aceptación electrónica de esta autorización debe registrarse junto con la identidad o cuenta del titular, fecha y hora, versión del documento, medio utilizado y evidencia técnica razonable. No debe usarse una casilla premarcada ni inferirse autorización por silencio o inactividad.</p>
