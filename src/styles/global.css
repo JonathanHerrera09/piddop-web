@@ -2272,6 +2272,12 @@ textarea {
   background: color-mix(in srgb, var(--surface-soft) 28%, transparent);
 }
 
+.order-detail__actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.9rem;
+}
+
 .order-detail__grid {
   display: grid;
   grid-template-columns: 1.2fr 0.8fr;

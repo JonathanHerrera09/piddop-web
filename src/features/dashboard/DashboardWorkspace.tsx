@@ -18,6 +18,7 @@ import { NavigationKey } from '@/features/dashboard/navigation';
 import { API_URL } from '@/services/http';
 import {
   activateAdminCustomer,
+  clearAdminCustomerOrders,
   eraseAdminCustomerData,
   createAdminCompany,
   createAdminCoupon,
@@ -2226,6 +2227,7 @@ function AdminCustomersPanel({
   const [query, setQuery] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
   const [activatingCustomerId, setActivatingCustomerId] = useState<number | null>(null);
+  const [clearingCustomerOrdersId, setClearingCustomerOrdersId] = useState<number | null>(null);
   const [erasingCustomerId, setErasingCustomerId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -2262,6 +2264,20 @@ function AdminCustomersPanel({
       setActionError(error instanceof ApiError ? error.message : 'No pudimos eliminar los datos del cliente.');
     } finally {
       setErasingCustomerId(null);
+    }
+  }
+
+  async function handleClearOrders(customer: AdminCustomerSummary) {
+    try {
+      setClearingCustomerOrdersId(customer.id);
+      setActionError(null);
+      const result = await clearAdminCustomerOrders(accessToken, customer.id);
+      setDraftCustomers((current) => current.map((item) => (item.id === customer.id ? result.customer : item)));
+      showToast({ kind: 'success', title: 'Pedidos vaciados', message: `Se eliminaron ${result.deleted_orders} pedido(s) de ${customer.name}.` });
+    } catch (error) {
+      setActionError(error instanceof ApiError ? error.message : 'No pudimos vaciar los pedidos del cliente.');
+    } finally {
+      setClearingCustomerOrdersId(null);
     }
   }
 
@@ -2342,6 +2358,16 @@ function AdminCustomersPanel({
 
                 {isExpanded ? (
                   <section className="order-detail">
+                    <div className="order-detail__actions">
+                      <DestructiveButton
+                        className="danger-link inline-action"
+                        disabled={clearingCustomerOrdersId === customer.id || customer.stats.orders_count === 0}
+                        label={clearingCustomerOrdersId === customer.id ? 'Vaciando pedidos...' : 'Vaciar pedidos'}
+                        title="Vaciar pedidos del cliente"
+                        impact="Se eliminarán todos los pedidos no activos y sin movimientos financieros de este cliente, incluidos sus comprobantes y calificaciones asociadas. Esta acción no se puede deshacer."
+                        onConfirm={() => handleClearOrders(customer)}
+                      />
+                    </div>
                     <div className="order-detail__grid">
                       <article className="order-detail__card">
                         <h3>Direcciones</h3>
