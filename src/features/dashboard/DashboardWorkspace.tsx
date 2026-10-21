@@ -18,6 +18,7 @@ import { NavigationKey } from '@/features/dashboard/navigation';
 import { API_URL } from '@/services/http';
 import {
   activateAdminCustomer,
+  eraseAdminCustomerData,
   createAdminCompany,
   createAdminCoupon,
   createAdminCategory,
@@ -2225,6 +2226,7 @@ function AdminCustomersPanel({
   const [query, setQuery] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
   const [activatingCustomerId, setActivatingCustomerId] = useState<number | null>(null);
+  const [erasingCustomerId, setErasingCustomerId] = useState<number | null>(null);
 
   useEffect(() => {
     setDraftCustomers(customers);
@@ -2245,6 +2247,21 @@ function AdminCustomersPanel({
       setActionError(error instanceof ApiError ? error.message : 'No pudimos activar al cliente.');
     } finally {
       setActivatingCustomerId(null);
+    }
+  }
+
+  async function handleErase(customer: AdminCustomerSummary) {
+    try {
+      setErasingCustomerId(customer.id);
+      setActionError(null);
+      await eraseAdminCustomerData(accessToken, customer.id);
+      setDraftCustomers((current) => current.filter((item) => item.id !== customer.id));
+      if (expandedId === customer.id) setExpandedId(null);
+      showToast({ kind: 'success', title: 'Datos eliminados', message: 'La cuenta fue desactivada y sus datos personales fueron eliminados.' });
+    } catch (error) {
+      setActionError(error instanceof ApiError ? error.message : 'No pudimos eliminar los datos del cliente.');
+    } finally {
+      setErasingCustomerId(null);
     }
   }
 
@@ -2312,6 +2329,14 @@ function AdminCustomersPanel({
                         {activatingCustomerId === customer.id ? 'Activando...' : 'Activar'}
                       </button>
                     ) : null}
+                    <DestructiveButton
+                      className="danger-link inline-action"
+                      disabled={erasingCustomerId === customer.id}
+                      label={erasingCustomerId === customer.id ? 'Eliminando...' : 'Borrar datos'}
+                      title="Eliminar datos del cliente"
+                      impact="Se revocará el acceso y se eliminarán sus datos personales, direcciones, citas, reseñas y solicitudes. Los pedidos históricos se conservarán anonimizados por motivos contables. Esta acción no se puede deshacer."
+                      onConfirm={() => handleErase(customer)}
+                    />
                   </div>
                 </div>
 

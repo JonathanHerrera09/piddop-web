@@ -174,6 +174,14 @@ export async function activateAdminCustomer(accessToken: string, customerId: num
   return response.data.customer;
 }
 
+export async function eraseAdminCustomerData(accessToken: string, customerId: number) {
+  await httpRequest<null>({
+    accessToken,
+    method: 'DELETE',
+    path: `/admin/customers/${customerId}`
+  });
+}
+
 export async function getAdminCoverageSettings(accessToken: string) {
   const response = await httpRequest<{ coverage: GlobalCoverageSettings }>({
     accessToken,
