@@ -2340,9 +2340,10 @@ function AdminCustomersPanel({
                         className="primary-button inline-action"
                         disabled={activatingCustomerId === customer.id}
                         onClick={() => void handleActivate(customer)}
+                        title="Reactivar acceso del cliente"
                         type="button"
                       >
-                        {activatingCustomerId === customer.id ? 'Activando...' : 'Activar'}
+                        {activatingCustomerId === customer.id ? 'Reactivando...' : 'Reactivar'}
                       </button>
                     ) : null}
                     <DestructiveButton
