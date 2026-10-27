@@ -184,6 +184,16 @@ export async function clearAdminCustomerOrders(accessToken: string, customerId: 
   return response.data;
 }
 
+export async function clearAdminCustomerAppointments(accessToken: string, customerId: number) {
+  const response = await httpRequest<{ customer: AdminCustomerSummary; deleted_appointments: number }>({
+    accessToken,
+    method: 'DELETE',
+    path: `/admin/customers/${customerId}/appointments`
+  });
+
+  return response.data;
+}
+
 export async function eraseAdminCustomerData(accessToken: string, customerId: number) {
   await httpRequest<null>({
     accessToken,

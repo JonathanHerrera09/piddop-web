@@ -18,6 +18,7 @@ import { NavigationKey } from '@/features/dashboard/navigation';
 import { API_URL } from '@/services/http';
 import {
   activateAdminCustomer,
+  clearAdminCustomerAppointments,
   clearAdminCustomerOrders,
   eraseAdminCustomerData,
   createAdminCompany,
@@ -2228,6 +2229,7 @@ function AdminCustomersPanel({
   const [actionError, setActionError] = useState<string | null>(null);
   const [activatingCustomerId, setActivatingCustomerId] = useState<number | null>(null);
   const [clearingCustomerOrdersId, setClearingCustomerOrdersId] = useState<number | null>(null);
+  const [clearingCustomerAppointmentsId, setClearingCustomerAppointmentsId] = useState<number | null>(null);
   const [erasingCustomerId, setErasingCustomerId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -2278,6 +2280,20 @@ function AdminCustomersPanel({
       setActionError(error instanceof ApiError ? error.message : 'No pudimos vaciar los pedidos del cliente.');
     } finally {
       setClearingCustomerOrdersId(null);
+    }
+  }
+
+  async function handleClearAppointments(customer: AdminCustomerSummary) {
+    try {
+      setClearingCustomerAppointmentsId(customer.id);
+      setActionError(null);
+      const result = await clearAdminCustomerAppointments(accessToken, customer.id);
+      setDraftCustomers((current) => current.map((item) => (item.id === customer.id ? result.customer : item)));
+      showToast({ kind: 'success', title: 'Citas vaciadas', message: `Se eliminaron ${result.deleted_appointments} cita(s) de ${customer.name}.` });
+    } catch (error) {
+      setActionError(error instanceof ApiError ? error.message : 'No pudimos vaciar las citas del cliente.');
+    } finally {
+      setClearingCustomerAppointmentsId(null);
     }
   }
 
@@ -2367,6 +2383,14 @@ function AdminCustomersPanel({
                         title="Vaciar pedidos del cliente"
                         impact="Se eliminarán todos los pedidos no activos y sin movimientos financieros de este cliente, incluidos sus comprobantes y calificaciones asociadas. Esta acción no se puede deshacer."
                         onConfirm={() => handleClearOrders(customer)}
+                      />
+                      <DestructiveButton
+                        className="danger-link inline-action"
+                        disabled={clearingCustomerAppointmentsId === customer.id || customer.stats.appointments_count === 0}
+                        label={clearingCustomerAppointmentsId === customer.id ? 'Vaciando citas...' : 'Vaciar citas'}
+                        title="Vaciar citas del cliente"
+                        impact="Se eliminarán todas las citas finalizadas o canceladas de este cliente. Las citas pendientes o aceptadas deben finalizarse o cancelarse antes. Esta acción no se puede deshacer."
+                        onConfirm={() => handleClearAppointments(customer)}
                       />
                     </div>
                     <div className="order-detail__grid">
