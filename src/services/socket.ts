@@ -1,13 +1,8 @@
-import { io, Socket } from 'socket.io-client';
-import { API_URL } from '@/services/http';
-
-function getSocketUrl() {
-  return API_URL.replace(/\/api\/v\d+\/?$/, '');
-}
+import { io, type Socket } from "socket.io-client";
+import { getApiUrl, getSocketUrl } from "@/lib/env";
 
 export function createWebSocketClient(accessToken: string): Socket {
-  return io(getSocketUrl(), {
-    auth: { token: accessToken },
-    transports: ['websocket', 'polling']
-  });
+  const configuredUrl = getSocketUrl();
+  const socketUrl = configuredUrl || getApiUrl().replace(/\/api\/v\d+\/?$/, "");
+  return io(socketUrl, { auth: { token: accessToken }, transports: ["websocket", "polling"] });
 }
