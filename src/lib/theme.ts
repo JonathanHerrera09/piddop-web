@@ -1,17 +1,36 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-export function useTheme() {
-  const [dark, setDark] = useState(false);
-  useEffect(() => {
-    setDark(document.documentElement.classList.contains("dark"));
-  }, []);
-  const toggle = () => {
-    const next = !dark;
-    setDark(next);
-    document.documentElement.classList.toggle("dark", next);
-    localStorage.setItem("piddop-theme", next ? "dark" : "light");
-  };
-  return { dark, toggle };
+const THEME_STORAGE_KEY = "piddop-theme";
+type Theme = "dark" | "light";
+
+function savedTheme(): Theme {
+  if (typeof window === "undefined") return "light";
+  return window.localStorage.getItem(THEME_STORAGE_KEY) === "dark" ? "dark" : "light";
 }
 
-export const themeInitScript = `try{if(localStorage.getItem('piddop-theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}`;
+function applyTheme(theme: Theme) {
+  document.documentElement.classList.toggle("dark", theme === "dark");
+}
+
+export function useTheme() {
+  const [theme, setTheme] = useState<Theme>(savedTheme);
+
+  useEffect(() => {
+    const persistedTheme = savedTheme();
+    setTheme(persistedTheme);
+    applyTheme(persistedTheme);
+  }, []);
+
+  const toggle = useCallback(() => {
+    setTheme((currentTheme) => {
+      const nextTheme: Theme = currentTheme === "dark" ? "light" : "dark";
+      applyTheme(nextTheme);
+      window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+      return nextTheme;
+    });
+  }, []);
+
+  return { dark: theme === "dark", toggle };
+}
+
+export const themeInitScript = `try{document.documentElement.classList.toggle('dark',localStorage.getItem('${THEME_STORAGE_KEY}')==='dark')}catch(e){}`;

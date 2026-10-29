@@ -42,6 +42,8 @@ import { CoveragePolygonMap } from "./company-location-map";
 import { ErrorState, EmptyState, LoadingState } from "./async-state";
 import {
   createCompanyTeamMember,
+  listAdminCompanyTeam,
+  listAdminCompanyTeamRoles,
   listCompanyTeam,
   listCompanyTeamRoles,
   removeCompanyTeamMember,
@@ -1391,8 +1393,8 @@ function AdminTeamUsers() {
     try {
       const id = Number(companyId);
       const [nextMembers, nextRoles] = await Promise.all([
-        listCompanyTeam(session.tokens.accessToken, id),
-        listCompanyTeamRoles(session.tokens.accessToken, id),
+        listAdminCompanyTeam(session.tokens.accessToken, id),
+        listAdminCompanyTeamRoles(session.tokens.accessToken, id),
       ]);
       setMembers(nextMembers);
       setRoles(nextRoles);

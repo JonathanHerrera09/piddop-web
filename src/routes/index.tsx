@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Eye, EyeOff, Moon, Sun } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
+import { useEffect, useState, type ReactNode } from "react";
+import { Eye, EyeOff, MonitorDown, Moon, Smartphone, Sun } from "lucide-react";
 import { Btn, Field, Input } from "@/components/panel/kit";
 import { useTheme } from "@/lib/theme";
 import { useSession } from "@/providers/session-provider";
@@ -25,10 +26,18 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDownloads, setShowDownloads] = useState(false);
+  const desktopDownloadUrl = import.meta.env.VITE_DESKTOP_DOWNLOAD_URL?.trim();
+  const mobileDownloadUrl = import.meta.env.VITE_MOBILE_DOWNLOAD_URL?.trim();
 
   useEffect(() => {
     if (status === "authenticated") void navigate({ to: "/panel", replace: true });
   }, [navigate, status]);
+
+  useEffect(() => {
+    const isTauri = Boolean((window as Window & { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__);
+    setShowDownloads(!isTauri && !Capacitor.isNativePlatform());
+  }, []);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -130,8 +139,50 @@ function Login() {
           <Btn type="submit" disabled={isSubmitting || status === "booting"} className="w-full">
             {isSubmitting ? "Entrando..." : "Entrar al panel"}
           </Btn>
+          {showDownloads ? (
+            <div className="border-t border-border pt-5">
+              <p className="mb-3 text-center text-xs text-muted-foreground">Descarga Piddop para tu dispositivo</p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <DownloadLink
+                  href={desktopDownloadUrl}
+                  icon={<MonitorDown className="size-4" />}
+                  label="Descargar para escritorio"
+                />
+                <DownloadLink
+                  href={mobileDownloadUrl}
+                  icon={<Smartphone className="size-4" />}
+                  label="Descargar para móvil"
+                />
+              </div>
+            </div>
+          ) : null}
         </form>
       </div>
     </div>
+  );
+}
+
+function DownloadLink({ href, icon, label }: { href?: string; icon: ReactNode; label: string }) {
+  if (!href) {
+    return (
+      <button
+        type="button"
+        disabled
+        title="La descarga estará disponible pronto."
+        className="flex items-center justify-center gap-2 rounded-lg border border-border px-3 py-2 text-xs font-medium text-muted-foreground opacity-60"
+      >
+        {icon}
+        {label}
+      </button>
+    );
+  }
+  return (
+    <a
+      href={href}
+      className="flex items-center justify-center gap-2 rounded-lg border border-border px-3 py-2 text-center text-xs font-medium hover:bg-muted"
+    >
+      {icon}
+      {label}
+    </a>
   );
 }

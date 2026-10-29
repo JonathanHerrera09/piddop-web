@@ -26,6 +26,19 @@ export async function listCompanyTeam(accessToken: string, companyId: number) {
     ).data.members ?? []
   );
 }
+
+/** Team data for a platform administrator. The admin endpoint authorizes the
+ * Super Admin role directly, rather than requiring membership in the company. */
+export async function listAdminCompanyTeam(accessToken: string, companyId: number) {
+  return (
+    (
+      await httpRequest<{ members: TeamMember[] }>({
+        accessToken,
+        path: `/admin/companies/${companyId}/team?page=1&page_size=50`,
+      })
+    ).data.members ?? []
+  );
+}
 export async function listCompanyTeamRoles(accessToken: string, companyId: number) {
   return (
     (
@@ -33,6 +46,17 @@ export async function listCompanyTeamRoles(accessToken: string, companyId: numbe
         accessToken,
         companyId,
         path: "/company/team/roles",
+      })
+    ).data.roles ?? []
+  );
+}
+
+export async function listAdminCompanyTeamRoles(accessToken: string, companyId: number) {
+  return (
+    (
+      await httpRequest<{ roles: TeamRole[] }>({
+        accessToken,
+        path: `/admin/companies/${companyId}/team/roles`,
       })
     ).data.roles ?? []
   );

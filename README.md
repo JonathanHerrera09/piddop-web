@@ -40,3 +40,21 @@ npm run lint
 npm run test
 npm run build
 ```
+
+## Aplicación de escritorio (Windows)
+
+La misma interfaz web también puede ejecutarse como aplicación de escritorio con Tauri.
+
+```sh
+# Ejecuta Piddop como aplicación de escritorio durante el desarrollo.
+npm run desktop:dev
+
+# Genera el ejecutable e instalador de Windows.
+npm run desktop:build
+
+# Genera solamente el instalador .exe de Windows (recomendado).
+npm run desktop:build:exe
+```
+
+Se requiere Rust estable (instalado mediante `rustup`) y las herramientas de compilación de
+Microsoft C++ para Windows. El instalador se genera en `src-tauri/target/release/bundle/`.

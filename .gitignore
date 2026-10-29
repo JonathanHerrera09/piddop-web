@@ -15,10 +15,16 @@ dist-ssr
 .tanstack/**
 .nitro
 *.local
+.env
 
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
+
+# Native desktop and mobile projects are maintained locally.
+src-tauri/
+android/
+capacitor.config.ts
 
 # Editor directories and files
 .vscode/*

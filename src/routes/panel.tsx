@@ -48,6 +48,11 @@ import { useSession } from "@/providers/session-provider";
 import { z } from "zod";
 import { defaultModule, isSuperAdmin, navigationFor, type ModuleKey } from "@/lib/navigation";
 import { createWebSocketClient } from "@/services/socket";
+import {
+  notificationPermissionGranted,
+  requestNotificationPermission,
+  showNotification,
+} from "@/lib/notifications";
 
 export const Route = createFileRoute("/panel")({
   validateSearch: z.object({ module: z.string().optional() }),
@@ -223,7 +228,7 @@ export function PanelShell({ moduleKey }: { moduleKey?: ModuleKey }) {
 
   useEffect(() => {
     setSound(window.localStorage.getItem("piddop-panel-sound") === "on");
-    setAlerts(Notification.permission === "granted" ? "on" : "off");
+    void notificationPermissionGranted().then((granted) => setAlerts(granted ? "on" : "off"));
   }, []);
 
   const playAlert = () => {
@@ -289,11 +294,11 @@ export function PanelShell({ moduleKey }: { moduleKey?: ModuleKey }) {
     const notifyWithPreferences = (payload: Parameters<typeof notify>[0]) => {
       notify(payload);
       if (sound) playAlert();
-      if (alerts === "on" && Notification.permission === "granted") {
-        new Notification(payload.title ?? "Nueva notificación", {
-          body: payload.message ?? "Tienes una novedad en el panel.",
-        });
-      }
+      if (alerts === "on")
+        void showNotification(
+          payload.title ?? "Nueva notificación",
+          payload.message ?? "Tienes una novedad en el panel.",
+        );
     };
     socket.on("notification:new", notifyWithPreferences);
     socket.on("order:created", (payload: { order_id?: number }) =>
@@ -427,11 +432,9 @@ export function PanelShell({ moduleKey }: { moduleKey?: ModuleKey }) {
             </button>
             <button
               onClick={async () => {
-                if (!("Notification" in window))
-                  return toast.error("Este navegador no admite alertas.");
-                const permission = await Notification.requestPermission();
-                setAlerts(permission === "granted" ? "on" : "off");
-                if (permission === "granted") toast.success("Alertas activadas");
+                const granted = await requestNotificationPermission();
+                setAlerts(granted ? "on" : "off");
+                if (granted) toast.success("Alertas activadas");
                 else toast.error("No se concedió permiso para las alertas.");
               }}
               className="hidden items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted sm:flex"
