@@ -24,6 +24,7 @@ export type CatalogProductPayload = {
 export type CatalogIngredient = {
   id: number;
   name: string;
+  image_url?: string | null;
   is_removable: boolean;
   is_default: boolean;
   status: string;
@@ -154,15 +155,24 @@ export async function deleteCatalogProductIngredient(
     path: `/company/products/${productId}/ingredients/${ingredientId}`,
   });
 }
+export async function uploadCatalogIngredientImage(accessToken: string, companyId: number, productId: number, ingredientId: number, file: File) {
+  const formData = new FormData(); formData.append('image', file);
+  return (await httpRequest<{ ingredient: CatalogIngredient }>({ accessToken, companyId, formData, method: 'POST', path: `/company/products/${productId}/ingredients/${ingredientId}/image` })).data.ingredient;
+}
 
 export type CatalogVariantOption = {
   id?: number;
   name: string;
+  image_url?: string | null;
   status: string;
   additional_price?: number | string;
   child_variants?: CatalogVariant[];
   childVariants?: CatalogVariant[];
 };
+export async function uploadCatalogVariantOptionImage(accessToken: string, companyId: number, optionId: number, file: File) {
+  const formData = new FormData(); formData.append('image', file);
+  return (await httpRequest<{ option: CatalogVariantOption }>({ accessToken, companyId, formData, method: 'POST', path: `/company/variants/options/${optionId}/image` })).data.option;
+}
 export type CatalogVariant = {
   id: number;
   name: string;

@@ -99,6 +99,8 @@ import {
   saveCatalogVariant,
   searchIngredientLibrary,
   uploadCatalogProductImages,
+  uploadCatalogIngredientImage,
+  uploadCatalogVariantOptionImage,
   type CatalogCategory,
   type CatalogProduct,
   type CatalogVariant,
@@ -1717,6 +1719,15 @@ export function Products() {
                       >
                         <div className="flex items-center gap-3">
                           <span className="flex-1">{option.name}</span>
+                          {option.id ? <label className="cursor-pointer text-xs font-semibold text-accent">
+                            IMG
+                            <input className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={async (event) => {
+                              const file = event.target.files?.[0];
+                              if (!file || !session || !company) return;
+                              try { await uploadCatalogVariantOptionImage(session.tokens.accessToken, company.id, Number(option.id), file); ok("Imagen del extra guardada"); }
+                              catch (reason) { toast.error(serviceErrorMessage(reason)); }
+                            }} />
+                          </label> : null}
                           <span className="text-accent">+$</span>
                           <Input
                             className="w-28 text-right"
@@ -1750,6 +1761,15 @@ export function Products() {
                                   className="mb-2 flex items-center gap-3 rounded-lg bg-muted/50 p-3 last:mb-0"
                                 >
                                   <span className="flex-1">{childOption.name}</span>
+                                  {childOption.id ? <label className="cursor-pointer text-xs font-semibold text-accent">
+                                    IMG
+                                    <input className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={async (event) => {
+                                      const file = event.target.files?.[0];
+                                      if (!file || !session || !company) return;
+                                      try { await uploadCatalogVariantOptionImage(session.tokens.accessToken, company.id, Number(childOption.id), file); ok("Imagen del extra guardada"); }
+                                      catch (reason) { toast.error(serviceErrorMessage(reason)); }
+                                    }} />
+                                  </label> : null}
                                   <span className="text-accent">+$</span>
                                   <Input
                                     className="w-28 text-right"
@@ -1962,6 +1982,23 @@ export function Products() {
                               {ingredient.is_default ? "Incluido por defecto" : "Opcional"} ·{" "}
                               {ingredient.is_removable ? "Se puede quitar" : "No se quita"}
                             </p>
+                            <label className="mt-2 inline-flex cursor-pointer text-xs font-semibold text-accent">
+                              {ingredient.image_url ? "Cambiar imagen" : "Agregar imagen"}
+                              <input
+                                className="hidden"
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                onChange={async (event) => {
+                                  const file = event.target.files?.[0];
+                                  if (!file || !session || !company || !draft) return;
+                                  try {
+                                    const updated = await uploadCatalogIngredientImage(session.tokens.accessToken, company.id, draft.id, ingredient.id, file);
+                                    setDraft({ ...draft, ingredients: (draft.ingredients ?? []).map((item) => item.id === ingredient.id ? updated : item) });
+                                    ok("Imagen del ingrediente guardada");
+                                  } catch (reason) { toast.error(serviceErrorMessage(reason)); }
+                                }}
+                              />
+                            </label>
                           </div>
                           <Btn
                             type="button"
