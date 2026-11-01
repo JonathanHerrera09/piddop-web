@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Plus,
@@ -107,6 +107,36 @@ import {
 } from "@/services/catalog.service";
 
 const ok = (m: string) => toast.success(m);
+
+function CatalogImageThumbnail({ imageUrl, alt }: { imageUrl?: string | null; alt: string }) {
+  if (!imageUrl) return null;
+  return (
+    <img
+      src={companyImageUrl(imageUrl)}
+      alt={alt}
+      className="size-10 shrink-0 rounded-md border border-border object-cover"
+    />
+  );
+}
+
+function replaceCatalogOptionImage(
+  groups: CatalogVariant[],
+  optionId: number,
+  imageUrl: string | null | undefined,
+): CatalogVariant[] {
+  return groups.map((group) => ({
+    ...group,
+    options: group.options.map((option) => ({
+      ...option,
+      ...(option.id === optionId ? { image_url: imageUrl } : {}),
+      child_variants: replaceCatalogOptionImage(
+        option.child_variants ?? option.childVariants ?? [],
+        optionId,
+        imageUrl,
+      ),
+    })),
+  }));
+}
 
 function serviceErrorMessage(error: unknown) {
   if (error instanceof ApiError) {
@@ -1327,6 +1357,10 @@ export function Products() {
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("active");
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const imagePreviews = useMemo(
+    () => imageFiles.map((file) => ({ file, url: URL.createObjectURL(file) })),
+    [imageFiles],
+  );
   const [saving, setSaving] = useState(false);
   const [variantIds, setVariantIds] = useState<number[]>([]);
   const [variantPrices, setVariantPrices] = useState<Record<number, string>>({});
@@ -1359,6 +1393,10 @@ export function Products() {
   useEffect(() => {
     void load();
   }, [load]);
+  useEffect(
+    () => () => imagePreviews.forEach(({ url }) => URL.revokeObjectURL(url)),
+    [imagePreviews],
+  );
   useEffect(() => {
     if (
       !session ||
@@ -1718,13 +1756,21 @@ export function Products() {
                         className="mb-2 rounded-lg bg-muted/50 p-3"
                       >
                         <div className="flex items-center gap-3">
+                          <CatalogImageThumbnail
+                            imageUrl={option.image_url}
+                            alt={`Imagen de ${option.name}`}
+                          />
                           <span className="flex-1">{option.name}</span>
                           {option.id ? <label className="cursor-pointer text-xs font-semibold text-accent">
                             IMG
                             <input className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={async (event) => {
                               const file = event.target.files?.[0];
                               if (!file || !session || !company) return;
-                              try { await uploadCatalogVariantOptionImage(session.tokens.accessToken, company.id, Number(option.id), file); ok("Imagen del extra guardada"); }
+                              try {
+                                const updated = await uploadCatalogVariantOptionImage(session.tokens.accessToken, company.id, Number(option.id), file);
+                                setVariants((current) => replaceCatalogOptionImage(current, Number(option.id), updated.image_url));
+                                ok("Imagen del extra guardada");
+                              }
                               catch (reason) { toast.error(serviceErrorMessage(reason)); }
                             }} />
                           </label> : null}
@@ -1760,13 +1806,21 @@ export function Products() {
                                   key={childOption.id ?? childOption.name}
                                   className="mb-2 flex items-center gap-3 rounded-lg bg-muted/50 p-3 last:mb-0"
                                 >
+                                  <CatalogImageThumbnail
+                                    imageUrl={childOption.image_url}
+                                    alt={`Imagen de ${childOption.name}`}
+                                  />
                                   <span className="flex-1">{childOption.name}</span>
                                   {childOption.id ? <label className="cursor-pointer text-xs font-semibold text-accent">
                                     IMG
                                     <input className="hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={async (event) => {
                                       const file = event.target.files?.[0];
                                       if (!file || !session || !company) return;
-                                      try { await uploadCatalogVariantOptionImage(session.tokens.accessToken, company.id, Number(childOption.id), file); ok("Imagen del extra guardada"); }
+                                      try {
+                                        const updated = await uploadCatalogVariantOptionImage(session.tokens.accessToken, company.id, Number(childOption.id), file);
+                                        setVariants((current) => replaceCatalogOptionImage(current, Number(childOption.id), updated.image_url));
+                                        ok("Imagen del extra guardada");
+                                      }
                                       catch (reason) { toast.error(serviceErrorMessage(reason)); }
                                     }} />
                                   </label> : null}
@@ -1844,12 +1898,48 @@ export function Products() {
               type="file"
               accept="image/jpeg,image/png,image/webp"
               multiple
-              onChange={(event) => setImageFiles(Array.from(event.target.files ?? []).slice(0, 5))}
+              disabled={(draft?.images.length ?? 0) >= 5}
+              onChange={(event) =>
+                setImageFiles(
+                  Array.from(event.target.files ?? []).slice(
+                    0,
+                    Math.max(0, 5 - (draft?.images.length ?? 0)),
+                  ),
+                )
+              }
             />
-            {imageFiles.length ? (
-              <p className="text-xs text-muted-foreground">
-                {imageFiles.length} imagen(es) seleccionada(s); se subirán al guardar.
-              </p>
+            {imagePreviews.length ? (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  {imagePreviews.length} imagen(es) seleccionada(s); se subirán al guardar.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  {imagePreviews.map(({ file, url }, index) => (
+                    <div
+                      key={`${file.name}-${file.lastModified}-${index}`}
+                      className="group relative size-20 overflow-hidden rounded-lg border border-dashed border-accent/50 bg-muted"
+                    >
+                      <img
+                        src={url}
+                        alt={`Vista previa: ${file.name}`}
+                        className="size-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-1 top-1 rounded-full bg-destructive p-1 text-destructive-foreground"
+                        aria-label={`Quitar ${file.name}`}
+                        onClick={() =>
+                          setImageFiles((files) =>
+                            files.filter((_, fileIndex) => fileIndex !== index),
+                          )
+                        }
+                      >
+                        <Trash2 className="size-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
             ) : null}
           </div>
         </div>
@@ -1976,7 +2066,12 @@ export function Products() {
                           key={ingredient.id}
                           className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"
                         >
-                          <div>
+                          <div className="flex min-w-0 items-center gap-3">
+                            <CatalogImageThumbnail
+                              imageUrl={ingredient.image_url}
+                              alt={`Imagen de ${ingredient.name}`}
+                            />
+                            <div>
                             <p className="font-medium">{ingredient.name}</p>
                             <p className="text-xs text-muted-foreground">
                               {ingredient.is_default ? "Incluido por defecto" : "Opcional"} ·{" "}
@@ -1999,6 +2094,7 @@ export function Products() {
                                 }}
                               />
                             </label>
+                            </div>
                           </div>
                           <Btn
                             type="button"
