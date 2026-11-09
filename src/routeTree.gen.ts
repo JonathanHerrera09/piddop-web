@@ -10,7 +10,12 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AutorizacionDeDatosRouteImport } from './routes/autorizacion-de-datos'
+import { Route as EliminarCuentaRouteImport } from './routes/eliminar-cuenta'
 import { Route as PanelRouteImport } from './routes/panel'
+import { Route as PoliticaPrivacidadRouteImport } from './routes/politica-privacidad'
+import { Route as SoporteRouteImport } from './routes/soporte'
+import { Route as TerminosYCondicionesRouteImport } from './routes/terminos-y-condiciones'
 import { Route as LegalPageRouteImport } from './routes/legal/$page'
 import { Route as PanelIndexRouteImport } from './routes/panel.index'
 import { Route as PanelModuleRouteImport } from './routes/panel.$module'
@@ -25,9 +30,34 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AutorizacionDeDatosRoute = AutorizacionDeDatosRouteImport.update({
+  id: '/autorizacion-de-datos',
+  path: '/autorizacion-de-datos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EliminarCuentaRoute = EliminarCuentaRouteImport.update({
+  id: '/eliminar-cuenta',
+  path: '/eliminar-cuenta',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PanelRoute = PanelRouteImport.update({
   id: '/panel',
   path: '/panel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PoliticaPrivacidadRoute = PoliticaPrivacidadRouteImport.update({
+  id: '/politica-privacidad',
+  path: '/politica-privacidad',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SoporteRoute = SoporteRouteImport.update({
+  id: '/soporte',
+  path: '/soporte',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TerminosYCondicionesRoute = TerminosYCondicionesRouteImport.update({
+  id: '/terminos-y-condiciones',
+  path: '/terminos-y-condiciones',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LegalPageRoute = LegalPageRouteImport.update({
@@ -73,7 +103,12 @@ const PanelTeamRoute = PanelTeamRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/autorizacion-de-datos': typeof AutorizacionDeDatosRoute
+  '/eliminar-cuenta': typeof EliminarCuentaRoute
   '/panel': typeof PanelRouteWithChildren
+  '/politica-privacidad': typeof PoliticaPrivacidadRoute
+  '/soporte': typeof SoporteRoute
+  '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
   '/legal/$page': typeof LegalPageRoute
   '/panel/$module': typeof PanelModuleRoute
   '/panel/appointments': typeof PanelAppointmentsRoute
@@ -85,6 +120,11 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/autorizacion-de-datos': typeof AutorizacionDeDatosRoute
+  '/eliminar-cuenta': typeof EliminarCuentaRoute
+  '/politica-privacidad': typeof PoliticaPrivacidadRoute
+  '/soporte': typeof SoporteRoute
+  '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
   '/legal/$page': typeof LegalPageRoute
   '/panel/$module': typeof PanelModuleRoute
   '/panel/appointments': typeof PanelAppointmentsRoute
@@ -97,7 +137,12 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/autorizacion-de-datos': typeof AutorizacionDeDatosRoute
+  '/eliminar-cuenta': typeof EliminarCuentaRoute
   '/panel': typeof PanelRouteWithChildren
+  '/politica-privacidad': typeof PoliticaPrivacidadRoute
+  '/soporte': typeof SoporteRoute
+  '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
   '/legal/$page': typeof LegalPageRoute
   '/panel/$module': typeof PanelModuleRoute
   '/panel/appointments': typeof PanelAppointmentsRoute
@@ -111,7 +156,12 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/autorizacion-de-datos'
+    | '/eliminar-cuenta'
     | '/panel'
+    | '/politica-privacidad'
+    | '/soporte'
+    | '/terminos-y-condiciones'
     | '/legal/$page'
     | '/panel/$module'
     | '/panel/appointments'
@@ -123,6 +173,11 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/autorizacion-de-datos'
+    | '/eliminar-cuenta'
+    | '/politica-privacidad'
+    | '/soporte'
+    | '/terminos-y-condiciones'
     | '/legal/$page'
     | '/panel/$module'
     | '/panel/appointments'
@@ -134,7 +189,12 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/autorizacion-de-datos'
+    | '/eliminar-cuenta'
     | '/panel'
+    | '/politica-privacidad'
+    | '/soporte'
+    | '/terminos-y-condiciones'
     | '/legal/$page'
     | '/panel/$module'
     | '/panel/appointments'
@@ -147,7 +207,12 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AutorizacionDeDatosRoute: typeof AutorizacionDeDatosRoute
+  EliminarCuentaRoute: typeof EliminarCuentaRoute
   PanelRoute: typeof PanelRouteWithChildren
+  PoliticaPrivacidadRoute: typeof PoliticaPrivacidadRoute
+  SoporteRoute: typeof SoporteRoute
+  TerminosYCondicionesRoute: typeof TerminosYCondicionesRoute
   LegalPageRoute: typeof LegalPageRoute
 }
 
@@ -160,11 +225,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/autorizacion-de-datos': {
+      id: '/autorizacion-de-datos'
+      path: '/autorizacion-de-datos'
+      fullPath: '/autorizacion-de-datos'
+      preLoaderRoute: typeof AutorizacionDeDatosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/eliminar-cuenta': {
+      id: '/eliminar-cuenta'
+      path: '/eliminar-cuenta'
+      fullPath: '/eliminar-cuenta'
+      preLoaderRoute: typeof EliminarCuentaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/panel': {
       id: '/panel'
       path: '/panel'
       fullPath: '/panel'
       preLoaderRoute: typeof PanelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/politica-privacidad': {
+      id: '/politica-privacidad'
+      path: '/politica-privacidad'
+      fullPath: '/politica-privacidad'
+      preLoaderRoute: typeof PoliticaPrivacidadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/soporte': {
+      id: '/soporte'
+      path: '/soporte'
+      fullPath: '/soporte'
+      preLoaderRoute: typeof SoporteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terminos-y-condiciones': {
+      id: '/terminos-y-condiciones'
+      path: '/terminos-y-condiciones'
+      fullPath: '/terminos-y-condiciones'
+      preLoaderRoute: typeof TerminosYCondicionesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/legal/$page': {
@@ -250,7 +350,12 @@ const PanelRouteWithChildren = PanelRoute._addFileChildren(PanelRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AutorizacionDeDatosRoute: AutorizacionDeDatosRoute,
+  EliminarCuentaRoute: EliminarCuentaRoute,
   PanelRoute: PanelRouteWithChildren,
+  PoliticaPrivacidadRoute: PoliticaPrivacidadRoute,
+  SoporteRoute: SoporteRoute,
+  TerminosYCondicionesRoute: TerminosYCondicionesRoute,
   LegalPageRoute: LegalPageRoute,
 }
 export const routeTree = rootRouteImport

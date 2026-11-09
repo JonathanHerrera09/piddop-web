@@ -23,6 +23,22 @@ describe("App routing", () => {
     expect(matches.at(-1)?.routeId).toBe("/legal/$page");
   });
 
+  it("redirects public external legal URLs to their legal pages", async () => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+    const routes = [
+      ["/politica-privacidad", "/legal/privacidad"],
+      ["/terminos-y-condiciones", "/legal/terminos"],
+      ["/autorizacion-de-datos", "/legal/datos"],
+      ["/eliminar-cuenta", "/legal/eliminar-cuenta"],
+      ["/soporte", "/legal/soporte"],
+    ] as const;
+
+    for (const [externalUrl, legalUrl] of routes) {
+      await router.navigate({ to: externalUrl });
+      expect(router.state.location.pathname).toBe(legalUrl);
+    }
+  });
+
   it("keeps Servicios on its own reloadable URL", () => {
     const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
 
