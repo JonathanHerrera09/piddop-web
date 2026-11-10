@@ -8,6 +8,7 @@ export type SupportTicket = {
   status: "open" | "in_progress" | "closed";
   created_at: string;
   customer?: { name: string; last_name: string; email: string };
+  messages?: Array<{ id: number; message: string; is_internal: boolean; created_at: string; author?: { name: string; last_name: string } }>;
 };
 
 export async function listAdminSupportTickets(accessToken: string) {
@@ -17,6 +18,12 @@ export async function listAdminSupportTickets(accessToken: string) {
       path: "/admin/support-tickets?page=1&page_size=100",
     })
   ).data.tickets;
+}
+export async function getAdminSupportTicket(accessToken: string, id: number) {
+  return (await httpRequest<{ ticket: SupportTicket }>({ accessToken, path: `/admin/support-tickets/${id}` })).data.ticket;
+}
+export async function addAdminSupportMessage(accessToken: string, id: number, message: string, isInternal: boolean) {
+  return (await httpRequest<{ ticket: SupportTicket }>({ accessToken, method: "POST", path: `/admin/support-tickets/${id}/messages`, body: { message, is_internal: isInternal } })).data.ticket;
 }
 export async function updateAdminSupportTicket(
   accessToken: string,

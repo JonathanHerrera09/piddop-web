@@ -63,6 +63,8 @@ import {
 } from "@/services/admin-companies.service";
 import {
   listAdminSupportTickets,
+  getAdminSupportTicket,
+  addAdminSupportMessage,
   updateAdminSupportTicket,
   type SupportTicket,
 } from "@/services/admin-support.service";
@@ -1759,6 +1761,7 @@ function SupportDemo() {
 export function Support() {
   const { session } = useSession();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  const [selected, setSelected] = useState<SupportTicket | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const load = useCallback(async () => {
@@ -1788,6 +1791,8 @@ export function Support() {
       );
     }
   };
+  const openTicket = async (ticket: SupportTicket) => { if (!session) return; try { setSelected(await getAdminSupportTicket(session.tokens.accessToken, ticket.id)); } catch (reason) { toast.error(reason instanceof Error ? reason.message : "No fue posible cargar la conversación."); } };
+  const write = async (internal: boolean) => { if (!session || !selected) return; const message = window.prompt(internal ? "Comentario interno (el cliente no lo verá):" : "Respuesta para el cliente:")?.trim(); if (!message) return; try { const updated = await addAdminSupportMessage(session.tokens.accessToken, selected.id, message, internal); setSelected(updated); setTickets((current) => current.map((ticket) => ticket.id === updated.id ? updated : ticket)); toast.success(internal ? "Comentario interno guardado." : "Respuesta enviada."); } catch (reason) { toast.error(reason instanceof Error ? reason.message : "No fue posible guardar el mensaje."); } };
   const labels: Record<SupportTicket["status"], string> = {
     open: "Abierto",
     in_progress: "En proceso",
@@ -1830,9 +1835,13 @@ export function Support() {
                 </option>
               ))}
             </select>
+            <Btn size="sm" variant="outline" onClick={() => void openTicket(ticket)}>Ver y responder</Btn>
           </Card>
         ))}
       </div>
+      <Modal open={!!selected} onClose={() => setSelected(null)} title={selected ? `Soporte: ${selected.subject}` : "Soporte"} footer={<><Btn variant="outline" onClick={() => void write(true)}>Nota interna</Btn><Btn onClick={() => void write(false)}>Responder cliente</Btn></>}>
+        <div className="space-y-3 text-sm"><p>{selected?.message}</p>{selected?.messages?.map((message) => <div key={message.id} className={message.is_internal ? "rounded bg-warning/10 p-3" : "rounded bg-muted p-3"}><p>{message.message}</p><p className="mt-1 text-xs text-muted-foreground">{message.is_internal ? "Nota interna" : `${message.author?.name ?? "Soporte"} ${message.author?.last_name ?? ""}`}</p></div>)}</div>
+      </Modal>
     </>
   );
 }
