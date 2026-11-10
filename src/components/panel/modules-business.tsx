@@ -83,6 +83,7 @@ import {
   listCompanyOrders,
   transitionCompanyOrder,
   type CompanyOrder,
+  type CompanyOrderItem,
 } from "@/services/orders.service";
 import {
   deleteCatalogProduct,
@@ -661,6 +662,38 @@ function OrdersDemo() {
   );
 }
 
+function OrderItemConfiguration({
+  item,
+  receipt = false,
+}: {
+  item: CompanyOrderItem;
+  receipt?: boolean;
+}) {
+  const variants = item.variants ?? [];
+  const removedIngredients = (item.ingredientAdjustments ?? []).filter(
+    (adjustment) => adjustment.action === "remove",
+  );
+  if (!variants.length && !removedIngredients.length && !item.customer_notes) return null;
+  return (
+    <div className={cn("mt-1 space-y-0.5 text-xs", receipt ? "text-slate-500" : "text-muted-foreground")}>
+      {variants.map((variant, index) => {
+        const price = Number(variant.additional_price ?? 0);
+        return (
+          <p key={`${variant.variant_name}-${variant.option_name}-${index}`}>
+            {variant.variant_name ? `${variant.variant_name}: ` : ""}
+            {variant.option_name ?? "Opción"}
+            {price > 0 ? ` (+${money(price)})` : ""}
+          </p>
+        );
+      })}
+      {removedIngredients.map((adjustment, index) => (
+        <p key={`${adjustment.ingredient_name}-${index}`}>Sin {adjustment.ingredient_name ?? "ingrediente"}</p>
+      ))}
+      {item.customer_notes ? <p>Nota: {item.customer_notes}</p> : null}
+    </div>
+  );
+}
+
 export function Orders() {
   const { session } = useSession();
   const company = session?.companies.find(
@@ -849,10 +882,12 @@ export function Orders() {
                       Artículos
                     </p>
                     {(order.items ?? []).map((item) => (
-                      <p key={item.id}>
-                        {item.quantity}× {item.product?.name ?? item.product_name ?? "Producto"}{" "}
-                        <span className="text-muted-foreground">{item.notes}</span>
-                      </p>
+                      <div key={item.id} className="mb-2 last:mb-0">
+                        <p>
+                          {item.quantity}× {item.product_name ?? "Producto"}
+                        </p>
+                        <OrderItemConfiguration item={item} />
+                      </div>
                     ))}
                   </div>
                   <div>
@@ -949,13 +984,11 @@ export function Orders() {
                         <span className="font-bold">{item.quantity}×</span>
                         <div className="min-w-0 flex-1">
                           <p className="font-semibold">
-                            {item.product?.name ?? item.product_name ?? "Producto"}
+                            {item.product_name ?? "Producto"}
                           </p>
-                          {item.notes ? (
-                            <p className="text-xs text-slate-500">{item.notes}</p>
-                          ) : null}
+                          <OrderItemConfiguration item={item} receipt />
                         </div>
-                        <b>{money(Number(item.unit_price) * item.quantity)}</b>
+                        <b>{money(Number(item.line_total ?? 0))}</b>
                       </div>
                     ))}
                   </div>

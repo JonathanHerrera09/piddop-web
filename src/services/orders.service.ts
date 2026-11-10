@@ -3,10 +3,20 @@ import { httpDownload, httpRequest } from "@/services/http";
 export type CompanyOrderItem = {
   id: number;
   quantity: number;
-  unit_price: number | string;
-  product?: { name: string } | null;
-  product_name?: string;
-  notes?: string | null;
+  unit_base_price?: number | string;
+  variants_total?: number | string;
+  line_total?: number | string;
+  product_name?: string | null;
+  customer_notes?: string | null;
+  variants?: Array<{
+    variant_name?: string | null;
+    option_name?: string | null;
+    additional_price?: number | string;
+  }>;
+  ingredientAdjustments?: Array<{
+    ingredient_name?: string | null;
+    action?: "remove" | string;
+  }>;
 };
 
 export type CompanyOrder = {
