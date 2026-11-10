@@ -1762,6 +1762,8 @@ export function Support() {
   const { session } = useSession();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [selected, setSelected] = useState<SupportTicket | null>(null);
+  const [reply, setReply] = useState("");
+  const [internal, setInternal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const load = useCallback(async () => {
@@ -1784,6 +1786,7 @@ export function Support() {
     try {
       const updated = await updateAdminSupportTicket(session.tokens.accessToken, ticket.id, status);
       setTickets((current) => current.map((item) => (item.id === ticket.id ? updated : item)));
+      setSelected((current) => current?.id === updated.id ? updated : current);
       toast.success("Estado actualizado.");
     } catch (reason) {
       toast.error(
@@ -1792,12 +1795,19 @@ export function Support() {
     }
   };
   const openTicket = async (ticket: SupportTicket) => { if (!session) return; try { setSelected(await getAdminSupportTicket(session.tokens.accessToken, ticket.id)); } catch (reason) { toast.error(reason instanceof Error ? reason.message : "No fue posible cargar la conversación."); } };
-  const write = async (internal: boolean) => { if (!session || !selected) return; const message = window.prompt(internal ? "Comentario interno (el cliente no lo verá):" : "Respuesta para el cliente:")?.trim(); if (!message) return; try { const updated = await addAdminSupportMessage(session.tokens.accessToken, selected.id, message, internal); setSelected(updated); setTickets((current) => current.map((ticket) => ticket.id === updated.id ? updated : ticket)); toast.success(internal ? "Comentario interno guardado." : "Respuesta enviada."); } catch (reason) { toast.error(reason instanceof Error ? reason.message : "No fue posible guardar el mensaje."); } };
+  const write = async () => { if (!session || !selected || !reply.trim()) return; try { const updated = await addAdminSupportMessage(session.tokens.accessToken, selected.id, reply.trim(), internal); setSelected(updated); setTickets((current) => current.map((ticket) => ticket.id === updated.id ? updated : ticket)); setReply(""); toast.success(internal ? "Nota interna guardada." : "Respuesta enviada."); } catch (reason) { toast.error(reason instanceof Error ? reason.message : "No fue posible guardar el mensaje."); } };
   const labels: Record<SupportTicket["status"], string> = {
     open: "Abierto",
     in_progress: "En proceso",
     closed: "Cerrado",
   };
+  const statusClass: Record<SupportTicket["status"], string> = {
+    open: "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300",
+    in_progress: "bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-300",
+    closed: "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+  };
+  const customerName = (ticket: SupportTicket) => ticket.customer ? `${ticket.customer.name} ${ticket.customer.last_name}`.trim() : "Cliente";
+  const formatDate = (value: string) => new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
   return (
     <>
       <PageHeader title="Soporte" desc="Solicitudes privadas enviadas desde la app de clientes." />
@@ -1806,42 +1816,25 @@ export function Support() {
       {!loading && !error && !tickets.length ? (
         <EmptyState title="No hay solicitudes de soporte." />
       ) : null}
-      <div className="grid gap-4">
-        {tickets.map((ticket) => (
-          <Card key={ticket.id} className="flex flex-wrap items-center justify-between gap-4">
-            <div className="max-w-xl">
-              <p className="font-semibold">{ticket.subject}</p>
-              <p className="text-sm text-muted-foreground">{ticket.message}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {ticket.customer
-                  ? `${ticket.customer.name} ${ticket.customer.last_name} · ${ticket.customer.email}`
-                  : ticket.contact_phone}{" "}
-                ·{" "}
-                {new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(
-                  new Date(ticket.created_at),
-                )}
-              </p>
+      {!loading && !error && tickets.length ? <Card className="overflow-hidden p-0">
+        <div className="grid min-h-[680px] grid-cols-1 md:grid-cols-[minmax(280px,0.78fr)_minmax(0,1.7fr)]">
+          <aside className="border-b bg-muted/20 md:border-b-0 md:border-r">
+            <div className="border-b px-4 py-4"><p className="font-semibold">Conversaciones</p><p className="text-xs text-muted-foreground">{tickets.length} solicitudes</p></div>
+            <div className="max-h-[300px] overflow-y-auto md:max-h-[620px]">
+              {tickets.map((ticket) => <button key={ticket.id} type="button" onClick={() => void openTicket(ticket)} className={`w-full border-b px-4 py-4 text-left transition hover:bg-muted/70 ${selected?.id === ticket.id ? "bg-primary/10" : "bg-transparent"}`}>
+                <div className="flex items-start gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground">{customerName(ticket).charAt(0).toUpperCase()}</div><div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><p className="truncate text-sm font-semibold">{customerName(ticket)}</p><span className="text-[11px] text-muted-foreground">{new Intl.DateTimeFormat("es-CO", { month: "short", day: "numeric" }).format(new Date(ticket.created_at))}</span></div><p className="truncate text-sm">{ticket.subject}</p><p className="mt-0.5 truncate text-xs text-muted-foreground">{ticket.message}</p><span className={`mt-2 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusClass[ticket.status]}`}>{labels[ticket.status]}</span></div></div>
+              </button>)}
             </div>
-            <select
-              value={ticket.status}
-              onChange={(event) =>
-                void update(ticket, event.target.value as SupportTicket["status"])
-              }
-              className="h-10 w-40 rounded-lg border border-input bg-background px-3 text-sm"
-            >
-              {Object.entries(labels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-            <Btn size="sm" variant="outline" onClick={() => void openTicket(ticket)}>Ver y responder</Btn>
-          </Card>
-        ))}
-      </div>
-      <Modal open={!!selected} onClose={() => setSelected(null)} title={selected ? `Soporte: ${selected.subject}` : "Soporte"} footer={<><Btn variant="outline" onClick={() => void write(true)}>Nota interna</Btn><Btn onClick={() => void write(false)}>Responder cliente</Btn></>}>
-        <div className="space-y-3 text-sm"><p>{selected?.message}</p>{selected?.messages?.map((message) => <div key={message.id} className={message.is_internal ? "rounded bg-warning/10 p-3" : "rounded bg-muted p-3"}><p>{message.message}</p><p className="mt-1 text-xs text-muted-foreground">{message.is_internal ? "Nota interna" : `${message.author?.name ?? "Soporte"} ${message.author?.last_name ?? ""}`}</p></div>)}</div>
-      </Modal>
+          </aside>
+          <section className="flex min-h-[500px] flex-col bg-muted/10">
+            {!selected ? <div className="flex flex-1 flex-col items-center justify-center p-8 text-center"><div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-2xl">💬</div><p className="font-semibold">Selecciona una conversación</p><p className="mt-1 max-w-sm text-sm text-muted-foreground">Revisa el historial y responde desde una vista estilo mensajería.</p></div> : <>
+              <header className="flex items-center justify-between border-b bg-background px-5 py-4"><div className="flex min-w-0 items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground">{customerName(selected).charAt(0).toUpperCase()}</div><div className="min-w-0"><p className="truncate font-semibold">{customerName(selected)}</p><p className="truncate text-xs text-muted-foreground">{selected.customer?.email || selected.contact_phone} · {selected.subject}</p></div></div><select aria-label="Estado del soporte" value={selected.status} onChange={(event) => void update(selected, event.target.value as SupportTicket["status"])} className="h-9 rounded-lg border border-input bg-background px-2 text-xs font-medium">{Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></header>
+              <div className="flex-1 space-y-3 overflow-y-auto p-5"><div className="mr-auto max-w-[82%] rounded-2xl rounded-tl-sm bg-background px-4 py-3 text-sm shadow-sm"><p>{selected.message}</p><p className="mt-1.5 text-[11px] text-muted-foreground">{customerName(selected)} · {formatDate(selected.created_at)}</p></div>{selected.messages?.map((message) => { const fromCustomer = message.author?.id === selected.customer?.id; return <div key={message.id} className={message.is_internal ? "mx-auto max-w-[84%] rounded-xl border border-amber-400/30 bg-amber-100/70 px-4 py-3 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100" : fromCustomer ? "mr-auto max-w-[82%] rounded-2xl rounded-tl-sm bg-background px-4 py-3 text-sm shadow-sm" : "ml-auto max-w-[82%] rounded-2xl rounded-tr-sm bg-primary px-4 py-3 text-sm text-primary-foreground"}><p>{message.message}</p><p className="mt-1.5 text-[11px] opacity-70">{message.is_internal ? "Nota interna" : fromCustomer ? customerName(selected) : "Soporte"} · {formatDate(message.created_at)}</p></div>; })}</div>
+              {selected.status === "closed" ? <p className="border-t bg-muted px-5 py-4 text-center text-sm text-muted-foreground">Este soporte está cerrado; no admite más mensajes.</p> : <footer className="border-t bg-background p-4"><Textarea value={reply} onChange={(event) => setReply(event.target.value)} placeholder={internal ? "Escribe una nota interna..." : "Escribe tu respuesta..."} /><div className="mt-3 flex flex-wrap items-center justify-between gap-3"><Toggle on={internal} onChange={setInternal} label="Nota interna" /><Btn disabled={!reply.trim()} onClick={() => void write()}>{internal ? "Guardar nota" : "Enviar mensaje"}</Btn></div></footer>}
+            </>}
+          </section>
+        </div>
+      </Card> : null}
     </>
   );
 }

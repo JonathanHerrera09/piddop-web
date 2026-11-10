@@ -7,8 +7,8 @@ export type SupportTicket = {
   contact_phone: string;
   status: "open" | "in_progress" | "closed";
   created_at: string;
-  customer?: { name: string; last_name: string; email: string };
-  messages?: Array<{ id: number; message: string; is_internal: boolean; created_at: string; author?: { name: string; last_name: string } }>;
+  customer?: { id: number; name: string; last_name: string; email: string };
+  messages?: Array<{ id: number; message: string; is_internal: boolean; created_at: string; author?: { id: number; name: string; last_name: string } }>;
 };
 
 export async function listAdminSupportTickets(accessToken: string) {
