@@ -486,10 +486,15 @@ type Order = {
   total: number;
   status: string;
 };
-const next: Record<string, [string, string][]> = {
+const demoNext: Record<string, [string, string][]> = {
   pending: [["Aceptar", "accepted"]],
   accepted: [["Preparando", "preparing"]],
   preparing: [["Listo envío", "ready"]],
+};
+const next: Record<string, [string, "accept" | "preparing" | "waiting-delivery" | "reject"][]> = {
+  pending: [["Aceptar", "accept"]],
+  accepted: [["Preparando", "preparing"]],
+  preparing: [["Listo envío", "waiting-delivery"]],
 };
 function OrdersDemo() {
   const [list, setList] = useState<Order[]>([
@@ -561,7 +566,7 @@ function OrdersDemo() {
                   <FileText className="size-3" />
                   PDF
                 </Btn>
-                {(next[o.status] ?? []).map(([l, s]) => (
+                {(demoNext[o.status] ?? []).map(([l, s]) => (
                   <Btn key={l} size="sm" onClick={() => set(o.id, s)}>
                     {l}
                   </Btn>
