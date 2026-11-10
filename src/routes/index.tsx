@@ -27,7 +27,7 @@ function Login() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDownloads, setShowDownloads] = useState(false);
-  const desktopDownloadUrl = import.meta.env.VITE_DESKTOP_DOWNLOAD_URL?.trim();
+  const desktopDownloadUrl = installUrl();
   const mobileDownloadUrl = import.meta.env.VITE_MOBILE_DOWNLOAD_URL?.trim();
 
   useEffect(() => {
@@ -160,6 +160,24 @@ function Login() {
       </div>
     </div>
   );
+}
+
+function installUrl() {
+  const configuredUrl = import.meta.env.VITE_DESKTOP_DOWNLOAD_URL?.trim();
+  if (configuredUrl) return configuredUrl;
+
+  const apiUrl = import.meta.env.VITE_API_URL?.trim();
+  if (!apiUrl) return undefined;
+
+  try {
+    const api = new URL(apiUrl);
+    api.pathname = api.pathname.replace(/\/api\/v1\/?$/, "") + "/downloads/Piddop-Setup.exe";
+    api.search = "";
+    api.hash = "";
+    return api.toString();
+  } catch {
+    return undefined;
+  }
 }
 
 function DownloadLink({ href, icon, label }: { href?: string; icon: ReactNode; label: string }) {
