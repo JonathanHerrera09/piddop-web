@@ -38,3 +38,7 @@ export async function createCampaign(
   formData.set("image", file);
   await httpRequest({ accessToken: token, formData, method: "POST", path: path(kind) });
 }
+
+export async function deleteCampaign(token: string, kind: "popups" | "promotions", id: number) {
+  await httpRequest({ accessToken: token, method: "DELETE", path: `${path(kind)}/${id}` });
+}

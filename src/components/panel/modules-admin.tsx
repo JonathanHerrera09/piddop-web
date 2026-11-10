@@ -89,7 +89,7 @@ import {
   saveCoupon,
   type Coupon,
 } from "@/services/admin-coupons.service";
-import { createCampaign, listCampaigns, type Campaign } from "@/services/admin-campaigns.service";
+import { createCampaign, deleteCampaign, listCampaigns, type Campaign } from "@/services/admin-campaigns.service";
 import { createCourier, listCouriers, type Courier } from "@/services/admin-couriers.service";
 import {
   deleteRole,
@@ -2897,6 +2897,7 @@ export function Popups({ banner }: { banner?: boolean }) {
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
+  const confirm = useConfirm();
   const load = useCallback(async () => {
     if (session) setItems(await listCampaigns(session.tokens.accessToken, kind));
   }, [kind, session]);
@@ -2919,6 +2920,16 @@ export function Popups({ banner }: { banner?: boolean }) {
       toast.error(e instanceof Error ? e.message : "No fue posible guardar.");
     }
   };
+  const remove = async (item: Campaign) => {
+    if (!session) return;
+    try {
+      await deleteCampaign(session.tokens.accessToken, kind, item.id);
+      setItems((current) => current.filter((entry) => entry.id !== item.id));
+      toast.success(`${banner ? "Promoción" : "Popup"} eliminado.`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No fue posible eliminar.");
+    }
+  };
   return (
     <>
       <PageHeader
@@ -2938,6 +2949,12 @@ export function Popups({ banner }: { banner?: boolean }) {
             <div className="p-4">
               <p className="font-semibold">{x.title}</p>
               <p>{x.message}</p>
+              <div className="mt-4 flex justify-end">
+                <Btn size="sm" variant="ghost" className="text-destructive" onClick={() => confirm.ask(`¿Eliminar ${banner ? "esta promoción" : "este popup"}?`, "También se eliminará su imagen.", "Eliminar", () => void remove(x))}>
+                  <Trash2 className="size-4" />
+                  Eliminar
+                </Btn>
+              </div>
             </div>
           </Card>
         ))}
@@ -2962,6 +2979,7 @@ export function Popups({ banner }: { banner?: boolean }) {
           />
         </Field>
       </Modal>
+      {confirm.node}
     </>
   );
 }
