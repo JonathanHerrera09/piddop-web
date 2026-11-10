@@ -667,6 +667,7 @@ export function Orders() {
     (entry) => entry.company.id === session.activeCompanyId,
   )?.company;
   const [orders, setOrders] = useState<CompanyOrder[]>([]);
+  const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<CompanyOrder | null>(null);
   const [loading, setLoading] = useState(true);
@@ -678,16 +679,17 @@ export function Orders() {
     setLoading(true);
     setError(null);
     try {
-      setOrders(await listCompanyOrders(session.tokens.accessToken, company.id));
+      setOrders(await listCompanyOrders(session.tokens.accessToken, company.id, query));
     } catch (reason) {
       setError(serviceErrorMessage(reason));
     } finally {
       setLoading(false);
     }
-  }, [company, session]);
+  }, [company, query, session]);
 
   useEffect(() => {
-    void load();
+    const timer = window.setTimeout(() => void load(), 250);
+    return () => window.clearTimeout(timer);
   }, [load]);
 
   const transition = async (
@@ -739,6 +741,13 @@ export function Orders() {
   return (
     <>
       <PageHeader title="Pedidos" desc="Operación diaria de la empresa activa." />
+      <div className="mb-4">
+        <SearchBox
+          value={query}
+          onChange={setQuery}
+          placeholder="Buscar por número, cliente o teléfono..."
+        />
+      </div>
       {!orders.length ? (
         <EmptyState
           title="No hay pedidos"

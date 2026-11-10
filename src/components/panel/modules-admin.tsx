@@ -71,6 +71,7 @@ import {
   clearAdminCustomer,
   eraseAdminCustomer,
   listAdminCustomers,
+  updateAdminCustomer,
   type AdminCustomer,
 } from "@/services/admin-customers.service";
 import {
@@ -1980,6 +1981,8 @@ export function Clients() {
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<AdminCustomer[]>([]);
   const [open, setOpen] = useState<number | null>(null);
+  const [editing, setEditing] = useState<AdminCustomer | null>(null);
+  const [customerForm, setCustomerForm] = useState({ name: "", last_name: "", email: "", phone: "" });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const confirm = useConfirm();
@@ -2009,6 +2012,21 @@ export function Clients() {
       toast.error(
         reason instanceof Error ? reason.message : "No fue posible reactivar el cliente.",
       );
+    }
+  };
+  const edit = (item: AdminCustomer) => {
+    setCustomerForm({ name: item.name, last_name: item.last_name, email: item.email, phone: item.phone });
+    setEditing(item);
+  };
+  const save = async () => {
+    if (!session || !editing) return;
+    try {
+      const updated = await updateAdminCustomer(session.tokens.accessToken, editing.id, customerForm);
+      setItems((current) => current.map((item) => (item.id === updated.id ? updated : item)));
+      setEditing(null);
+      toast.success("Datos del cliente actualizados.");
+    } catch (reason) {
+      toast.error(reason instanceof Error ? reason.message : "No fue posible actualizar el cliente.");
     }
   };
   const action = (item: AdminCustomer, target: "orders" | "appointments" | "erase") =>
@@ -2070,6 +2088,9 @@ export function Clients() {
                   onClick={() => setOpen(open === item.id ? null : item.id)}
                 >
                   {open === item.id ? "Ocultar" : "Ver detalle"}
+                </Btn>
+                <Btn size="sm" variant="outline" onClick={() => edit(item)}>
+                  Editar
                 </Btn>
                 {item.status !== "active" ? (
                   <Btn size="sm" variant="accent" onClick={() => void activate(item)}>
@@ -2141,6 +2162,24 @@ export function Clients() {
           </Card>
         ))}
       </div>
+      <Modal
+        open={!!editing}
+        onClose={() => setEditing(null)}
+        title="Editar cliente"
+        footer={
+          <>
+            <Btn variant="outline" onClick={() => setEditing(null)}>Cancelar</Btn>
+            <Btn onClick={() => void save()}>Guardar cambios</Btn>
+          </>
+        }
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Nombre"><Input value={customerForm.name} onChange={(event) => setCustomerForm((current) => ({ ...current, name: event.target.value }))} /></Field>
+          <Field label="Apellido"><Input value={customerForm.last_name} onChange={(event) => setCustomerForm((current) => ({ ...current, last_name: event.target.value }))} /></Field>
+          <Field label="Correo"><Input type="email" value={customerForm.email} onChange={(event) => setCustomerForm((current) => ({ ...current, email: event.target.value }))} /></Field>
+          <Field label="Teléfono"><Input type="tel" value={customerForm.phone} onChange={(event) => setCustomerForm((current) => ({ ...current, phone: event.target.value }))} /></Field>
+        </div>
+      </Modal>
       {confirm.node}
     </>
   );

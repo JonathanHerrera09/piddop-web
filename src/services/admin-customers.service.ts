@@ -30,6 +30,20 @@ export async function activateAdminCustomer(accessToken: string, id: number) {
     })
   ).data.customer;
 }
+export async function updateAdminCustomer(
+  accessToken: string,
+  id: number,
+  customer: Pick<AdminCustomer, "name" | "last_name" | "email" | "phone">,
+) {
+  return (
+    await httpRequest<{ customer: AdminCustomer }>({
+      accessToken,
+      method: "PUT",
+      path: `/admin/customers/${id}`,
+      body: customer,
+    })
+  ).data.customer;
+}
 export async function clearAdminCustomer(
   accessToken: string,
   id: number,
