@@ -19,6 +19,7 @@ export type ModuleKey =
   | "not"
   | "pay"
   | "mail"
+  | "ops"
   | "com"
   | "ord"
   | "prd"
@@ -56,6 +57,7 @@ const adminItems: NavigationRule[] = [
   { key: "not", label: "Notificaciones" },
   { key: "pay", label: "Medios de pago" },
   { key: "mail", label: "Centro de correos" },
+  { key: "ops", label: "Seguimiento operativo" },
 ];
 
 const catalogItems: NavigationRule[] = [

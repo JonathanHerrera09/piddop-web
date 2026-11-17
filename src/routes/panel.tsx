@@ -37,6 +37,7 @@ import {
   X,
   Volume2,
   BellRing,
+  Activity,
 } from "lucide-react";
 import * as A from "@/components/panel/modules-admin";
 import * as B from "@/components/panel/modules-business";
@@ -99,6 +100,7 @@ export const moduleSlugs: Record<ModuleKey, string> = {
   not: "notifications",
   pay: "payment-methods",
   mail: "email-center",
+  ops: "operations",
   com: "commissions",
   ord: "orders",
   prd: "products",
@@ -151,6 +153,7 @@ function useItems(
       { key: "not", label: "Notificaciones", icon: Bell, render: () => <A.Notifications /> },
       { key: "pay", label: "Medios de pago", icon: CreditCard, render: () => <A.PaymentMethods /> },
       { key: "mail", label: "Centro de correos", icon: Mail, render: () => <A.EmailCenter /> },
+      { key: "ops", label: "Seguimiento operativo", icon: Activity, render: () => <A.OperationMonitoring /> },
     ];
   const svc = isServices;
   const name = companyName;

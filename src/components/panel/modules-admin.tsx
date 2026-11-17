@@ -128,6 +128,7 @@ import {
   markNotificationRead,
   type UserNotification,
 } from "@/services/dashboard.service";
+import { getAdminOperations, type MonitoredOperation, type OperationsMonitoring } from "@/services/admin-operations.service";
 
 const ok = (m: string) => toast.success(m);
 
@@ -455,6 +456,54 @@ export function AdminSummary() {
       </Card>
     </>
   );
+}
+
+/* ---------- Seguimiento operativo ---------- */
+export function OperationMonitoring() {
+  const { session } = useSession();
+  const [data, setData] = useState<OperationsMonitoring | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [alertsOnly, setAlertsOnly] = useState(true);
+  const load = useCallback(async () => {
+    if (!session) return;
+    setError(null);
+    try {
+      setData(await getAdminOperations(session.tokens.accessToken));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "No fue posible cargar el seguimiento.");
+    }
+  }, [session]);
+  useEffect(() => void load(), [load]);
+  if (error) return <ErrorState message={error} retry={load} />;
+  if (!data) return <LoadingState label="Cargando operaciones activas..." />;
+  const items = alertsOnly ? data.operations.filter((item) => item.is_alert) : data.operations;
+  const waiting = (operation: MonitoredOperation) => operation.waiting_minutes >= 60 ? `${Math.floor(operation.waiting_minutes / 60)} h ${operation.waiting_minutes % 60} min` : `${operation.waiting_minutes} min`;
+  const kind = (operation: MonitoredOperation) => operation.kind === "order" ? "Pedido" : "Cita";
+  return <>
+    <PageHeader title="Seguimiento operativo" desc="Pedidos y citas activos de todas las empresas. Las alertas aparecen cuando un estado supera su tiempo máximo." actions={<Btn variant="outline" onClick={() => void load()}><RefreshCw className="size-4" /> Actualizar</Btn>} />
+    <div className="grid gap-4 md:grid-cols-4">
+      <Stat accent label="Alertas" value={data.summary.alerts} hint="Requieren seguimiento" />
+      <Stat label="Operaciones activas" value={data.summary.active} />
+      <Stat label="Pedidos activos" value={data.summary.orders} />
+      <Stat label="Citas activas" value={data.summary.appointments} />
+    </div>
+    <Card className="mt-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div><p className="font-semibold">Bandeja central</p><p className="text-sm text-muted-foreground">El tiempo se cuenta desde el último cambio de estado.</p></div>
+        <Toggle on={alertsOnly} onChange={setAlertsOnly} label={alertsOnly ? "Solo alertas" : "Todas las activas"} />
+      </div>
+      {items.length === 0 ? <EmptyState title={alertsOnly ? "No hay alertas activas" : "No hay operaciones activas"} description={alertsOnly ? "Todos los negocios están dentro de los tiempos esperados." : "Aparecerán aquí los pedidos y citas en curso."} /> : <Table head={["Alerta", "Empresa", "Operación", "Estado", "Tiempo", "Contacto"]}>
+        {items.map((item) => <tr key={`${item.kind}-${item.id}`} className={item.is_alert ? "bg-destructive/5" : undefined}>
+          <Td><Badge tone={item.is_alert ? "suspended" : "info"}>{item.is_alert ? "Revisar" : "En tiempo"}</Badge></Td>
+          <Td><p className="font-semibold">{item.company?.name ?? "Empresa"}</p><p className="text-xs text-muted-foreground">{item.company?.type ?? ""}</p></Td>
+          <Td><p className="font-medium">{kind(item)} {item.reference}</p><p className="text-xs text-muted-foreground">{item.customer?.name ?? "Cliente"}{item.service ? ` · ${item.service}` : ""}</p></Td>
+          <Td><Status s={item.status} /></Td>
+          <Td><p className={item.is_alert ? "font-bold text-destructive" : "font-medium"}>{waiting(item)}</p><p className="text-xs text-muted-foreground">Límite: {item.threshold_minutes} min</p></Td>
+          <Td><p>{item.company?.phone || "Sin teléfono"}</p><p className="text-xs text-muted-foreground">{item.company?.email || "Sin correo"}</p></Td>
+        </tr>)}
+      </Table>}
+    </Card>
+  </>;
 }
 
 /* ---------- Empresas ---------- */

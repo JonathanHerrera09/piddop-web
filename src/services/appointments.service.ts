@@ -30,7 +30,7 @@ export async function updateCompanyAppointmentStatus(
   accessToken: string,
   companyId: number,
   appointmentId: number,
-  status: "accepted" | "completed",
+  status: "accepted" | "completed" | "cancelled",
 ) {
   return (
     await httpRequest<{ appointment: Appointment }>({

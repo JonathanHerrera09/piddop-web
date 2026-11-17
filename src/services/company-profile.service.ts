@@ -11,6 +11,8 @@ export type CompanyProfile = {
   address: string | null;
   latitude: number | string | null;
   longitude: number | string | null;
+  auto_accept_orders: boolean;
+  auto_accept_appointments: boolean;
 };
 
 export type CompanyProfilePayload = Omit<CompanyProfile, "id" | "logo">;

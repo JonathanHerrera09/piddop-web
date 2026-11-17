@@ -7,6 +7,10 @@ import {
   Printer,
   FileText,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  CalendarDays,
+  List,
   Trash2,
   Clock,
   Package,
@@ -2882,6 +2886,8 @@ export function BizSettings({ name }: { name: string }) {
         address: next.address,
         latitude: next.latitude,
         longitude: next.longitude,
+        auto_accept_orders: Boolean(next.auto_accept_orders),
+        auto_accept_appointments: Boolean(next.auto_accept_appointments),
       });
     } catch (requestError) {
       setError(serviceErrorMessage(requestError));
@@ -2978,6 +2984,22 @@ export function BizSettings({ name }: { name: string }) {
               onChange={(event) => setDraft({ ...draft, description: event.target.value })}
             />
           </Field>
+          <div className="rounded-lg border border-border bg-muted/30 p-4 md:col-span-2">
+            <p className="font-medium">Aceptación automática</p>
+            <p className="mt-1 text-sm text-muted-foreground">Los nuevos registros se aceptarán sin que el negocio tenga que confirmarlos manualmente.</p>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:gap-8">
+              <Toggle
+                on={Boolean(draft.auto_accept_orders)}
+                onChange={(auto_accept_orders) => setDraft({ ...draft, auto_accept_orders })}
+                label="Aceptar pedidos automáticamente"
+              />
+              <Toggle
+                on={Boolean(draft.auto_accept_appointments)}
+                onChange={(auto_accept_appointments) => setDraft({ ...draft, auto_accept_appointments })}
+                label="Aceptar citas automáticamente"
+              />
+            </div>
+          </div>
           <Field label="Ubicación del negocio" className="md:col-span-2">
             <LocationMap
               latitude={Number.isFinite(latitude) ? latitude : 6.2442}
@@ -3106,6 +3128,33 @@ export function Appointments() {
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<number | null>(null);
   const [updating, setUpdating] = useState<number | null>(null);
+  const [view, setView] = useState<"list" | "agenda">("list");
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const localDateKey = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+  const addDays = (date: Date, days: number) => {
+    const next = new Date(date);
+    next.setDate(next.getDate() + days);
+    return next;
+  };
+  const selectedDateKey = localDateKey(selectedDate);
+  const appointmentsForDay = items.filter((item) => item.scheduled_date === selectedDateKey);
+  const appointmentHours = appointmentsForDay.flatMap((item) => [Number(item.start_time.slice(0, 2)), Number(item.end_time.slice(0, 2))]);
+  const startHour = Math.max(0, Math.min(7, ...appointmentHours));
+  const endHour = Math.min(24, Math.max(21, ...appointmentHours.map((hour) => hour + 1)));
+  const hourHeight = 72;
+  const scheduleHours = Array.from({ length: Math.max(1, endHour - startHour) }, (_, index) => startHour + index);
+  const dateLabel = new Intl.DateTimeFormat("es-CO", { month: "long", year: "numeric" }).format(selectedDate);
+  const dayLabel = new Intl.DateTimeFormat("es-CO", { weekday: "long", day: "numeric", month: "long" }).format(selectedDate);
+  const weekDays = Array.from({ length: 7 }, (_, index) => addDays(selectedDate, index - 3));
+  const minutesSinceStart = (time: string) => {
+    const [hours, minutes] = time.slice(0, 5).split(":").map(Number);
+    return (hours - startHour) * 60 + minutes;
+  };
   const load = useCallback(async () => {
     if (!session || !company) return;
     setLoading(true);
@@ -3121,7 +3170,7 @@ export function Appointments() {
   useEffect(() => {
     void load();
   }, [load]);
-  const changeStatus = async (item: Appointment, status: "accepted" | "completed") => {
+  const changeStatus = async (item: Appointment, status: "accepted" | "completed" | "cancelled") => {
     if (!session || !company) return;
     setUpdating(item.id);
     try {
@@ -3145,6 +3194,16 @@ export function Appointments() {
   return (
     <>
       <PageHeader title="Citas" desc="Gestión de reservas de servicios." />
+      <div className="mb-4 flex justify-end">
+        <div className="inline-flex rounded-lg border border-border bg-card p-1">
+          <Btn size="sm" variant={view === "list" ? "primary" : "ghost"} onClick={() => setView("list")}>
+            <List className="size-4" /> Lista
+          </Btn>
+          <Btn size="sm" variant={view === "agenda" ? "primary" : "ghost"} onClick={() => setView("agenda")}>
+            <CalendarDays className="size-4" /> Agenda
+          </Btn>
+        </div>
+      </div>
       {loading ? <LoadingState label="Cargando citas reales..." /> : null}
       {error ? <ErrorState message={error} onRetry={() => void load()} /> : null}
       {!loading && !error && items.length === 0 ? (
@@ -3153,7 +3212,7 @@ export function Appointments() {
           description="Las reservas de tus clientes aparecerán aquí."
         />
       ) : null}
-      {!loading && !error && items.length ? (
+      {!loading && !error && items.length && view === "list" ? (
         <Table head={["Cliente", "Servicio", "Profesional", "Fecha/hora", "Estado", "Acciones"]}>
           {items.map((item) => (
             <>
@@ -3195,6 +3254,16 @@ export function Appointments() {
                         Completar
                       </Btn>
                     ) : null}
+                    {["pending", "accepted"].includes(item.status) ? (
+                      <Btn
+                        size="sm"
+                        variant="danger"
+                        disabled={updating === item.id}
+                        onClick={() => void changeStatus(item, "cancelled")}
+                      >
+                        Cancelar
+                      </Btn>
+                    ) : null}
                   </div>
                 </Td>
               </tr>
@@ -3209,6 +3278,58 @@ export function Appointments() {
             </>
           ))}
         </Table>
+      ) : null}
+      {!loading && !error && items.length && view === "agenda" ? (
+        <Card className="overflow-hidden p-0">
+          <div className="border-b border-border p-4 sm:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="capitalize font-display text-lg font-bold">{dateLabel}</p>
+                <p className="capitalize text-sm text-muted-foreground">{dayLabel}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Btn size="sm" variant="outline" onClick={() => setSelectedDate(addDays(selectedDate, -1))} aria-label="Día anterior"><ChevronLeft className="size-4" /></Btn>
+                <Btn size="sm" variant="accent" onClick={() => setSelectedDate(new Date())}>Hoy</Btn>
+                <Btn size="sm" variant="outline" onClick={() => setSelectedDate(addDays(selectedDate, 1))} aria-label="Día siguiente"><ChevronRight className="size-4" /></Btn>
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-7 gap-1 sm:gap-2">
+              {weekDays.map((day) => {
+                const isSelected = localDateKey(day) === selectedDateKey;
+                const isToday = localDateKey(day) === localDateKey(new Date());
+                return <button key={localDateKey(day)} type="button" onClick={() => setSelectedDate(day)} className={cn("rounded-xl px-1 py-2 text-center transition sm:px-2", isSelected ? "bg-primary text-primary-foreground shadow-glow" : "bg-muted hover:bg-accent", isToday && !isSelected && "ring-1 ring-primary")}><span className="block text-[10px] font-semibold uppercase opacity-75">{new Intl.DateTimeFormat("es-CO", { weekday: "short" }).format(day).replace(".", "")}</span><span className="mt-0.5 block text-base font-bold">{day.getDate()}</span></button>;
+              })}
+            </div>
+          </div>
+          <div className="max-h-[70vh] overflow-y-auto p-3 sm:p-5">
+            {appointmentsForDay.length === 0 ? <EmptyState title="Día libre" description="No hay citas programadas para esta fecha." /> : null}
+            {appointmentsForDay.length ? <div className="grid min-w-[480px] grid-cols-[3.5rem_minmax(0,1fr)]" style={{ height: `${scheduleHours.length * hourHeight}px` }}>
+              <div className="relative border-r border-border/70 bg-muted/20">
+                {scheduleHours.map((hour) => <span key={hour} className="absolute right-2 -translate-y-1/2 text-right text-xs font-semibold text-muted-foreground" style={{ top: `${(hour - startHour) * hourHeight}px` }}>{new Intl.DateTimeFormat("es-CO", { hour: "numeric", minute: "2-digit" }).format(new Date(2026, 0, 1, hour))}</span>)}
+              </div>
+              <div className="relative">
+                {scheduleHours.map((hour) => <div key={hour} className="absolute left-0 right-0 border-t border-border/70" style={{ top: `${(hour - startHour) * hourHeight}px` }}><div className="absolute left-0 right-0 top-1/2 border-t border-dashed border-border/50" /></div>)}
+                {appointmentsForDay.map((item) => {
+                  const top = Math.max(0, minutesSinceStart(item.start_time) / 60 * hourHeight);
+                  const duration = Math.max(30, minutesSinceStart(item.end_time) - minutesSinceStart(item.start_time));
+                  const customer = item.customer ? `${item.customer.name} ${item.customer.last_name}` : "Cliente";
+                  const color = item.status === "completed" ? "bg-muted text-muted-foreground" : item.status === "pending" ? "bg-warning/25 text-foreground ring-warning/40" : "bg-primary text-primary-foreground";
+                  return <button type="button" key={item.id} onClick={() => setOpen(open === item.id ? null : item.id)} className={cn("absolute left-2 right-2 z-10 overflow-hidden rounded-lg px-3 py-2 text-left shadow-sm ring-1 transition hover:brightness-95", color)} style={{ top: `${top}px`, height: `${Math.max(42, duration / 60 * hourHeight - 4)}px` }}><p className="truncate text-sm font-bold">{customer}</p><p className="truncate text-xs opacity-85">{item.service?.name ?? "Servicio"} · {item.start_time.slice(0, 5)} – {item.end_time.slice(0, 5)}</p></button>;
+                })}
+              </div>
+            </div> : null}
+          </div>
+          {open && appointmentsForDay.some((item) => item.id === open) ? (() => {
+            const item = appointmentsForDay.find((appointment) => appointment.id === open)!;
+            return <div className="flex flex-wrap justify-end gap-2 border-t border-border bg-card p-4">
+              {item.status === "pending" ? <Btn size="sm" disabled={updating === item.id} onClick={() => void changeStatus(item, "accepted")}>Aceptar</Btn> : null}
+              {item.status === "accepted" ? <Btn size="sm" variant="accent" disabled={updating === item.id} onClick={() => void changeStatus(item, "completed")}>Completar</Btn> : null}
+              {["pending", "accepted"].includes(item.status) ? <Btn size="sm" variant="danger" disabled={updating === item.id} onClick={() => void changeStatus(item, "cancelled")}>Cancelar</Btn> : null}
+              <Btn size="sm" variant="outline" onClick={() => setOpen(null)}>Cerrar</Btn>
+            </div>;
+          })() : null}
+          {open && appointmentsForDay.some((item) => item.id === open) ? (() => { const item = appointmentsForDay.find((appointment) => appointment.id === open)!; return <div className="border-t border-border bg-muted/40 p-4 text-sm"><b>{item.customer ? `${item.customer.name} ${item.customer.last_name}` : "Cliente"}</b> · {item.service?.name ?? "Servicio"} · {item.customer_notes || "Sin notas"}</div>; })() : null}
+        </Card>
       ) : null}
     </>
   );
