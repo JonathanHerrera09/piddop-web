@@ -129,7 +129,11 @@ import {
   type UserNotification,
 } from "@/services/dashboard.service";
 import { getAdminOperations, type MonitoredOperation, type OperationsMonitoring } from "@/services/admin-operations.service";
-import { sendPushCampaign } from "@/services/admin-push-notifications.service";
+import {
+  previewPushCampaign,
+  sendPushCampaign,
+  type PushCampaignFilters,
+} from "@/services/admin-push-notifications.service";
 
 const ok = (m: string) => toast.success(m);
 
@@ -3428,15 +3432,44 @@ export function PushCampaigns() {
   const { session } = useSession();
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
+  const [filters, setFilters] = useState<PushCampaignFilters>({
+    activity: "all",
+    company_type: "all",
+    company_id: null,
+    minimum_order_total: null,
+    from: "",
+    to: "",
+  });
+  const [companies, setCompanies] = useState<AdminCompany[]>([]);
+  const [recipients, setRecipients] = useState<number | null>(null);
   const [sending, setSending] = useState(false);
   const [lastResult, setLastResult] = useState<{ recipients: number; push_tickets: number } | null>(null);
   const confirm = useConfirm();
+
+  useEffect(() => {
+    if (!session) return;
+    listAdminCompanies(session.tokens.accessToken)
+      .then(setCompanies)
+      .catch(() => toast.error("No fue posible cargar los negocios para filtrar."));
+  }, [session]);
+
+  const calculateRecipients = async () => {
+    if (!session) return null;
+    try {
+      const result = await previewPushCampaign(session.tokens.accessToken, filters);
+      setRecipients(result.recipients);
+      return result.recipients;
+    } catch (reason) {
+      toast.error(reason instanceof Error ? reason.message : "No fue posible calcular la audiencia.");
+      return null;
+    }
+  };
 
   const send = async () => {
     if (!session || sending) return;
     setSending(true);
     try {
-      const result = await sendPushCampaign(session.tokens.accessToken, title.trim(), message.trim());
+      const result = await sendPushCampaign(session.tokens.accessToken, title.trim(), message.trim(), filters);
       setLastResult(result);
       setTitle("");
       setMessage("");
@@ -3448,14 +3481,20 @@ export function PushCampaigns() {
     }
   };
 
-  const requestSend = () => {
+  const requestSend = async () => {
     if (!title.trim() || !message.trim()) {
       toast.error("Escribe un titulo y un mensaje.");
       return;
     }
+    const audience = await calculateRecipients();
+    if (audience === null) return;
+    if (!audience) {
+      toast.error("No hay clientes que cumplan los filtros seleccionados.");
+      return;
+    }
     confirm.ask(
       "Enviar notificacion push",
-      "Se enviara de inmediato a todos los clientes activos y se guardara en su centro de notificaciones.",
+      `Se enviara de inmediato a ${audience} cliente(s) y se guardara en su centro de notificaciones.`,
       "Enviar ahora",
       () => void send(),
     );
@@ -3465,7 +3504,7 @@ export function PushCampaigns() {
     <>
       <PageHeader
         title="Campanas push"
-        desc="Envía avisos desde la plataforma a todos los clientes activos que tengan las notificaciones habilitadas."
+        desc="Crea campañas para audiencias específicas: compradores, clientes con citas o personas que usaron un negocio concreto."
       />
       <div className="grid max-w-4xl gap-4 lg:grid-cols-[1.4fr_1fr]">
         <Card className="space-y-4">
@@ -3485,12 +3524,70 @@ export function PushCampaigns() {
               onChange={(event) => setMessage(event.target.value)}
             />
           </Field>
+          <div className="grid gap-3 border-t border-border pt-4 sm:grid-cols-2">
+            <Field label="Actividad del cliente">
+              <select
+                className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+                value={filters.activity}
+                onChange={(event) => setFilters((current) => ({ ...current, activity: event.target.value as PushCampaignFilters["activity"] }))}
+              >
+                <option value="all">Cualquier actividad</option>
+                <option value="orders">Ha hecho compras/pedidos</option>
+                <option value="appointments">Tiene o tuvo una cita</option>
+              </select>
+            </Field>
+            <Field label="Tipo de negocio">
+              <select
+                className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+                value={filters.company_type}
+                onChange={(event) => setFilters((current) => ({ ...current, company_type: event.target.value as PushCampaignFilters["company_type"], company_id: null, }))}
+              >
+                <option value="all">Todos los tipos</option>
+                <option value="services">Servicios (barberías, belleza, etc.)</option>
+                <option value="food">Comida</option>
+                <option value="products">Productos</option>
+              </select>
+            </Field>
+            <Field label="Negocio específico">
+              <select
+                className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+                value={filters.company_id ?? ""}
+                onChange={(event) => setFilters((current) => ({ ...current, company_id: event.target.value ? Number(event.target.value) : null }))}
+              >
+                <option value="">Todos los negocios</option>
+                {companies
+                  .filter((company) => filters.company_type === "all" || company.type === filters.company_type)
+                  .map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}
+              </select>
+            </Field>
+            <Field label="Total comprado mínimo (opcional)">
+              <Input
+                type="number"
+                min="0"
+                value={filters.minimum_order_total ?? ""}
+                placeholder="Ej. 50000"
+                onChange={(event) => setFilters((current) => ({ ...current, minimum_order_total: event.target.value === "" ? null : Number(event.target.value) }))}
+              />
+            </Field>
+            <Field label="Desde (opcional)">
+              <Input type="date" value={filters.from} onChange={(event) => setFilters((current) => ({ ...current, from: event.target.value }))} />
+            </Field>
+            <Field label="Hasta (opcional)">
+              <Input type="date" value={filters.to} onChange={(event) => setFilters((current) => ({ ...current, to: event.target.value }))} />
+            </Field>
+          </div>
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-            <p className="text-xs text-muted-foreground">El envio es inmediato y no se puede deshacer.</p>
-            <Btn disabled={sending || !title.trim() || !message.trim()} onClick={requestSend}>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>El envio es inmediato y no se puede deshacer.</span>
+              {recipients !== null ? <strong className="text-foreground">Audiencia: {recipients}</strong> : null}
+            </div>
+            <div className="flex gap-2">
+              <Btn variant="outline" disabled={sending} onClick={() => void calculateRecipients()}>Calcular audiencia</Btn>
+              <Btn disabled={sending || !title.trim() || !message.trim()} onClick={() => void requestSend()}>
               <Send className="size-4" />
               {sending ? "Enviando..." : "Enviar ahora"}
-            </Btn>
+              </Btn>
+            </div>
           </div>
         </Card>
         <Card className="space-y-3 bg-muted/30">
