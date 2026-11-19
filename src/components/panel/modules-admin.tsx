@@ -129,6 +129,7 @@ import {
   type UserNotification,
 } from "@/services/dashboard.service";
 import { getAdminOperations, type MonitoredOperation, type OperationsMonitoring } from "@/services/admin-operations.service";
+import { sendPushCampaign } from "@/services/admin-push-notifications.service";
 
 const ok = (m: string) => toast.success(m);
 
@@ -3423,6 +3424,96 @@ export function RolesPerms() {
 }
 
 /* ---------- Notificaciones (compartido) ---------- */
+export function PushCampaigns() {
+  const { session } = useSession();
+  const [title, setTitle] = useState("");
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [lastResult, setLastResult] = useState<{ recipients: number; push_tickets: number } | null>(null);
+  const confirm = useConfirm();
+
+  const send = async () => {
+    if (!session || sending) return;
+    setSending(true);
+    try {
+      const result = await sendPushCampaign(session.tokens.accessToken, title.trim(), message.trim());
+      setLastResult(result);
+      setTitle("");
+      setMessage("");
+      toast.success(`Notificacion enviada a ${result.recipients} cliente(s).`);
+    } catch (reason) {
+      toast.error(reason instanceof Error ? reason.message : "No fue posible enviar la notificacion.");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const requestSend = () => {
+    if (!title.trim() || !message.trim()) {
+      toast.error("Escribe un titulo y un mensaje.");
+      return;
+    }
+    confirm.ask(
+      "Enviar notificacion push",
+      "Se enviara de inmediato a todos los clientes activos y se guardara en su centro de notificaciones.",
+      "Enviar ahora",
+      () => void send(),
+    );
+  };
+
+  return (
+    <>
+      <PageHeader
+        title="Campanas push"
+        desc="Envía avisos desde la plataforma a todos los clientes activos que tengan las notificaciones habilitadas."
+      />
+      <div className="grid max-w-4xl gap-4 lg:grid-cols-[1.4fr_1fr]">
+        <Card className="space-y-4">
+          <Field label={`Titulo (${title.length}/120)`}>
+            <Input
+              value={title}
+              maxLength={120}
+              placeholder="Ej. Tu barberia te espera"
+              onChange={(event) => setTitle(event.target.value)}
+            />
+          </Field>
+          <Field label={`Mensaje (${message.length}/500)`}>
+            <Textarea
+              value={message}
+              maxLength={500}
+              placeholder="Ej. Agenda tu corte esta semana y luce increible."
+              onChange={(event) => setMessage(event.target.value)}
+            />
+          </Field>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+            <p className="text-xs text-muted-foreground">El envio es inmediato y no se puede deshacer.</p>
+            <Btn disabled={sending || !title.trim() || !message.trim()} onClick={requestSend}>
+              <Send className="size-4" />
+              {sending ? "Enviando..." : "Enviar ahora"}
+            </Btn>
+          </div>
+        </Card>
+        <Card className="space-y-3 bg-muted/30">
+          <p className="font-semibold">Vista previa</p>
+          <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+            <p className="font-semibold">{title.trim() || "Titulo de la notificacion"}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{message.trim() || "El mensaje aparecera aqui."}</p>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Si un dispositivo no permite push, el aviso seguira disponible dentro de la app.
+          </p>
+          {lastResult ? (
+            <p className="rounded-lg bg-success/10 p-3 text-sm text-success">
+              Ultimo envio: {lastResult.recipients} notificaciones registradas; {lastResult.push_tickets} dispositivos aceptaron el envio.
+            </p>
+          ) : null}
+        </Card>
+      </div>
+      {confirm.node}
+    </>
+  );
+}
+
 function NotificationsDemo() {
   const [q, setQ] = useState("");
   const [list, setList] = useState([

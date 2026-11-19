@@ -17,6 +17,7 @@ export type ModuleKey =
   | "dom"
   | "rol"
   | "not"
+  | "push"
   | "pay"
   | "mail"
   | "ops"
@@ -55,6 +56,7 @@ const adminItems: NavigationRule[] = [
   { key: "dom", label: "Domiciliarios" },
   { key: "rol", label: "Roles y permisos" },
   { key: "not", label: "Notificaciones" },
+  { key: "push", label: "Campanas push" },
   { key: "pay", label: "Medios de pago" },
   { key: "mail", label: "Centro de correos" },
   { key: "ops", label: "Seguimiento operativo" },
